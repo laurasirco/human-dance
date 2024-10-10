@@ -7,6 +7,8 @@ body {
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+
+    background-color: blue;
   }
   
   canvas {
@@ -43,4 +45,23 @@ body {
     height: 100%;
     overflow: hidden;
   }
+
+  /* Estilos para los checkbox con texto a la izquierda */
+.row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.row input[type="checkbox"] {
+  margin-right: 10px; /* Espacio entre el checkbox y el texto */
+}
+
+.row p {
+  font-size: 14px;
+  color: #333;
+  margin-left: 10px;
+  white-space: nowrap;
+}
 

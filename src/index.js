@@ -3,16 +3,20 @@ import * as THREE from 'three';
 import * as Tone from 'tone';
 import { gsap } from 'gsap';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { CCDIKSolver } from 'three/addons/animation/CCDIKSolver.js';
 
 let character;
-let ikSolver, ikHelper;
 let mixer;
 
 let char = {};
 
 var hipsUpAction, hipsDownAction;
 var armsAction;
+var torsoLeftAction, torsoRightAction;
+var headNodInAction, headNodOutAction;
+var clapAction;
+var initialPoseAction;
+var torsoSide = 0;
+var headNod = false;
 
 // TONE PART
 
@@ -67,18 +71,17 @@ const loop = new Tone.Loop((time) => {
   
   let step = index % 16;
 
+  clapAction.stop();
+  initialPoseAction.play();
+
   if (step % 2 === 0) {  // Cambiar el criterio de alternancia según sea necesario
     // Reproducir hipsDown
-    hipsDownAction.stop();   // Detener la animación anterior
-    hipsDownAction.reset();  // Reiniciar la animación
     hipsDownAction.play();   // Reproducir la animación
 
     hipsUpAction.stop();
     hipsUpAction.reset();
 } else {
     // // Reproducir hipsUp
-    hipsUpAction.stop();     // Detener la animación anterior
-    hipsUpAction.reset();    // Reiniciar la animación
     hipsUpAction.play();     // Reproducir la animación
 
     // // // Detener hipsDown
@@ -86,9 +89,9 @@ const loop = new Tone.Loop((time) => {
     hipsDownAction.reset();
 }
 
-  if(step % 4 == 0){
-    metronome.triggerAttackRelease('A4', '16n', time);
-  }
+  // if(step % 4 == 0){
+  //   metronome.triggerAttackRelease('A4', '16n', time);
+  // }
 
   for (let i = 0; i < $rows.length; i++) {
     let $row = $rows[i];
@@ -106,19 +109,59 @@ const loop = new Tone.Loop((time) => {
       //   synth.triggerAttackRelease(note, '16n', time);
       // }
 
-      if (i == 0 && char.leftShoulder && char.rightShoulder) {
+      if(i == 0){
+        if(torsoSide == 0){
+
+          torsoLeftAction.play();
+
+          torsoRightAction.stop();
+          torsoRightAction.reset();
+
+          torsoSide = 1;
+        }
+        else{
+
+          torsoRightAction.play();
+
+          torsoLeftAction.stop();
+          torsoRightAction.reset();
+
+          torsoSide = 0;
+        }
+      }
+
+      if (i == 1) {
         armsAction.stop();
         armsAction.play();
       }
 
-      // if (i == 1 && char.spine00) {
-      //   animateRotation(char.spine00, [0.5, 0.0, 0.0], 0.1, initialChar.spine00);
-      // }
+      if (i == 2) {
+        if(headNod == false){
 
-      // if (i == 2 && char.leftUpLeg && char.rightUpLeg) {
-      //   animateRotation(char.leftUpLeg, [0.0, 0.0, 0.6], 0.15, initialChar.leftUpLeg);
-      //   animateRotation(char.rightUpLeg, [0.0, 0.0, -0.6], 0.15, initialChar.rightUpLeg);
-      // }
+          headNodInAction.play();
+
+          headNodOutAction.stop();
+          headNodOutAction.reset();
+
+          headNod = true;
+        }
+        else{
+
+          headNodOutAction.play();
+
+          headNodInAction.stop();
+          headNodInAction.reset();
+
+          headNod = false;
+        }
+      }
+
+      if(i == 3) {
+        armsAction.stop();
+        initialPoseAction.stop();
+        clapAction.stop();
+        clapAction.play();
+      }
     }
   }
   index++;
@@ -148,20 +191,51 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 
 const renderer = new THREE.WebGLRenderer({ alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 // Añadir luces a la escena
-const ambientLight = new THREE.AmbientLight('white', 1);
+const ambientLight = new THREE.AmbientLight('white', 2);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-directionalLight.position.set(5, 10, 7.5);
+const directionalLight = new THREE.DirectionalLight('white', 1);
+directionalLight.position.set(10, 10, 7.5);
 scene.add(directionalLight);
+directionalLight.castShadow = true;
+// Configurar las propiedades de la sombra, como la distancia y la resolución
+directionalLight.shadow.mapSize.width = 1024;  // Resolución horizontal
+directionalLight.shadow.mapSize.height = 1024; // Resolución vertical
+directionalLight.shadow.camera.near = 0.1;    // Distancia mínima de la sombra
+directionalLight.shadow.camera.far = 50;     // Distancia máxima de la sombra
+
+
+// Crear un plano para que sea el shadow catcher
+const planeGeometry = new THREE.PlaneGeometry(10, 10);
+const planeMaterial = new THREE.MeshStandardMaterial({
+  color: 'blue', // Color verde
+  roughness: 0.5,  // Control de la rugosidad para efectos de luz
+  metalness: 0.0,  // Control de la metálicidad
+  side: THREE.DoubleSide // Mostrar en ambos lados
+});
+const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+
+// Colocarlo en la escena y rotarlo para que quede horizontal
+plane.rotation.x = -Math.PI / 2;
+plane.receiveShadow = true;
+
+// Añadir el plano a la escena
+scene.add(plane);
+
+// const directionalLight2 = new THREE.DirectionalLight('blue', 2);
+// directionalLight2.position.set(-5, -10, 7.5);
+// scene.add(directionalLight2);
 
 loader.load('src/Englishman_simplerig_v06.glb', function (gltf) {
   scene.add(gltf.scene);
   
   character = gltf.scene;
+  character.castShadow = true;
 
   const skinnedMesh = character.getObjectByProperty('type', 'SkinnedMesh');
   const ske = skinnedMesh.skeleton;
@@ -169,9 +243,16 @@ loader.load('src/Englishman_simplerig_v06.glb', function (gltf) {
   char.skeleton = ske;
 
   character.traverse(function (object) {
-    // if (object.isBone) {
-    //     console.log(object.name);  // Esto imprime los nombres de los huesos, útil para saber cuál es cuál
-    // }
+
+    if(object.isMesh){
+      object.castShadow = true;
+      object.receiveShadow = true;
+    }
+
+    if(object.name == 'jacket'){
+      char.jacket = object;
+      char.jacket.visible = false;
+    }
 
     if (object.name == "mixamorigHips") {
       char.hips = object;
@@ -246,9 +327,17 @@ loader.load('src/Englishman_simplerig_v06.glb', function (gltf) {
   
     mixer = new THREE.AnimationMixer(character);
 
+    console.log(animations);
+
     const hipsUpAnimation = THREE.AnimationClip.findByName(animations, 'HipsUp');
     const hipsDownAnimation = THREE.AnimationClip.findByName(animations, 'HipsDown');
     const armsAnimation = THREE.AnimationClip.findByName(animations, 'Arms');
+    const torsoRightAnimation = THREE.AnimationClip.findByName(animations, 'TorsoRight');
+    const torsoLeftAnimation = THREE.AnimationClip.findByName(animations, 'TorsoLeft');
+    const clapAnimation = THREE.AnimationClip.findByName(animations, 'Clap');
+    const headNodInAnimation = THREE.AnimationClip.findByName(animations, 'HeadNodIn');
+    const headNodOutAnimation = THREE.AnimationClip.findByName(animations, 'HeadNodOut');
+    const initialPoseAnimation = THREE.AnimationClip.findByName(animations, 'InitialPose');
 
     const filteredHipsUpAnimation = filterTracksForBones(hipsUpAnimation, ['mixamorigHips', 'mixamorigUpLegL', 'mixamorigLegL', 'mixamorigFootL', 'mixamorigUpLegR', 'mixamorigLegR', 'mixamorigFootR']);
     hipsUpAction = mixer.clipAction(filteredHipsUpAnimation);
@@ -264,19 +353,47 @@ loader.load('src/Englishman_simplerig_v06.glb', function (gltf) {
     armsAction = mixer.clipAction(filteredArmsAnimation);
     armsAction.setLoop(THREE.LoopOnce, 1);
     armsAction.clampWhenFinished = true;
+
+    const fiteredTorsoRightAnimation = filterTracksForBones(torsoRightAnimation, ['mixamorigSpine', 'mixamorigSpine1', 'mixamorigSpine2']);
+    torsoRightAction = mixer.clipAction(fiteredTorsoRightAnimation);
+    torsoRightAction.setLoop(THREE.LoopOnce, 1);
+    torsoRightAction.clampWhenFinished = true;
+
+    const fiteredTorsoLeftAnimation = filterTracksForBones(torsoLeftAnimation, ['mixamorigSpine', 'mixamorigSpine1', 'mixamorigSpine2']);
+    torsoLeftAction = mixer.clipAction(fiteredTorsoLeftAnimation);
+    torsoLeftAction.setLoop(THREE.LoopOnce, 1);
+    torsoLeftAction.clampWhenFinished = true;
+
+    const filteredClapAnimation = filterTracksForBones(clapAnimation, ['mixamorigShoulderL', 'mixamorigShoulderR', 'mixamorigArmL', 'mixamorigArmR', 'mixamorigForeArmL', 'mixamorigForeArmR', 'mixamorigHandL', 'mixamorigHandR']);
+    clapAction = mixer.clipAction(filteredClapAnimation);
+    clapAction.setLoop(THREE.LoopOnce, 1);
+    clapAction.clampWhenFinished = true;
+
+    const filteredHeadNodInAnimation = filterTracksForBones(headNodInAnimation, ['mixamorigNeck', 'mixamorigHead']);
+    headNodInAction = mixer.clipAction(filteredHeadNodInAnimation);
+    headNodInAction.setLoop(THREE.LoopOnce, 1); 
+    headNodInAction.clampWhenFinished = true;
+
+    const filteredHeadNodOutAnimation = filterTracksForBones(headNodOutAnimation, ['mixamorigNeck', 'mixamorigHead']);
+    headNodOutAction = mixer.clipAction(filteredHeadNodOutAnimation);
+    headNodOutAction.setLoop(THREE.LoopOnce, 1); 
+    headNodOutAction.clampWhenFinished = true;
+
+    initialPoseAction = mixer.clipAction(initialPoseAnimation);
+    initialPoseAction.paused = true;
+    initialPoseAction.play();
     
   }
 
   console.log(char);
 
   const skeletonHelper = new THREE.SkeletonHelper(character);
-  scene.add(skeletonHelper);
-
+  // scene.add(skeletonHelper);
 
   let startTime = Date.now();
   const clock = new THREE.Clock();
 
-  const targetFPS = 24;
+  const targetFPS = 120;
   const frameDuration = 1000 / targetFPS;  // Duración de un frame en milisegundos
 
   let lastFrameTime = 0;
@@ -290,7 +407,7 @@ loader.load('src/Englishman_simplerig_v06.glb', function (gltf) {
         // Actualizar la escena, animaciones y renderizar
         const delta = clock.getDelta();
 
-        character.rotation.y += Math.sin(delta);
+        character.rotation.y += Math.sin(delta/2);
 
         mixer.update(delta);  // Actualiza las animaciones
         renderer.render(scene, camera);
