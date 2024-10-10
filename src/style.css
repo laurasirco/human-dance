@@ -1,0 +1,46 @@
+body {
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+  
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1; /* Poner la escena detrás de los elementos HTML */
+  }
+  
+  /* Estilos para el h1 */
+  h1 {
+    position: absolute;
+    bottom: 10%;
+    width: 100%;
+    text-align: center;
+    font-size: 3em;
+    color: black;
+    z-index: 1; /* Poner el texto delante de la escena */
+  }
+  
+  #sequencer{
+    position: absolute;
+    margin-top: 40px;
+    width: 100%;
+    text-align: center;
+    font-size: 1em;
+    color: black;
+    z-index: 1; /* Poner el texto delante de la escena */
+  }
+  
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
