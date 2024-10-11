@@ -8,7 +8,7 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 
-    background-color: blue;
+    background-color: #ecf0f1;
   }
   
   canvas {
@@ -47,21 +47,53 @@ body {
   }
 
   /* Estilos para los checkbox con texto a la izquierda */
-.row {
+.button-row {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 10px;
+  margin: 10px;
 }
 
-.row input[type="checkbox"] {
-  margin-right: 10px; /* Espacio entre el checkbox y el texto */
+/* Estilo de los botones */
+.color-button {
+  background-color: white; /* Green */
+  border: none;
+  color: #bdc3c7;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  box-shadow: 0 1px 1px 0 rgba(0,0,0,0.2), 0 1px 1px 0 rgba(0,0,0,0.19);
 }
 
-.row p {
-  font-size: 14px;
-  color: #333;
-  margin-left: 10px;
-  white-space: nowrap;
+/* Cambiar el color al hacer clic (activo) */
+.color-button.active {
+  background-color: #1abc9c; /* Cambiar a color verde cuando esté pulsado */
 }
 
+.color-button.current {
+  background-color: #9b59b6; /* Cambiar a color verde cuando esté pulsado */
+}
+
+.row-label {
+  margin-right: 20px; /* Separación entre el texto y los botones */
+  font-weight: bold;
+  font-size: 16px;
+  min-width: 100px; /* Ancho mínimo para alinear etiquetas */
+  text-align: right;
+}
+
+#start-button {
+  background-color: white; /* Green */
+  border: none;
+  color: #bdc3c7;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 20px;
+  border-radius: 5px;
+  box-shadow: 0 1px 1px 0 rgba(0,0,0,0.2), 0 1px 1px 0 rgba(0,0,0,0.19);
+}

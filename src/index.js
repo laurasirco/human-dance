@@ -21,23 +21,23 @@ var headNod = false;
 // TONE PART
 
 var tr808 = new Tone.Players({
-  35: 'src/tr808/BD.WAV',
-  37: 'src/tr808/RS.WAV',
-  38: 'src/tr808/SD.WAV',
-  39: 'src/tr808/CP.WAV',
-  41: 'src/tr808/LT.WAV',
-  42: 'src/tr808/CH.WAV',
-  45: 'src/tr808/MT.WAV',
-  46: 'src/tr808/OH.WAV',
-  48: 'src/tr808/HT.WAV',
-  49: 'src/tr808/CY.WAV'
+  35: 'audio/tr808/BD.WAV',
+  37: 'audio/tr808/RS.WAV',
+  38: 'audio/tr808/SD.WAV',
+  39: 'audio/tr808/CP.WAV',
+  41: 'audio/tr808/LT.WAV',
+  42: 'audio/tr808/CH.WAV',
+  45: 'audio/tr808/MT.WAV',
+  46: 'audio/tr808/OH.WAV',
+  48: 'audio/tr808/HT.WAV',
+  49: 'audio/tr808/CY.WAV'
 });
 
 tr808.toDestination();
 
 var reverb = new Tone.Reverb({
-  decay: 2,
-  preDelay: 0.01
+  decay: 0.2,
+  preDelay: 0.0
 }).toDestination();
 
 tr808.connect(reverb);
@@ -50,26 +50,41 @@ metronome.toDestination();
 const gain = new Tone.Gain(0.6);
 gain.toDestination();
 
-const $rows = document.body.querySelectorAll('div > div');
-console.log($rows);
+const notes = [35, 37, 38, 39, 41, 42, 46];
 
-const notes = [35, 37, 38, 39, 41];
+// BUTTONS
+
+const $rows = document.body.querySelectorAll('.button-row');
+
+let buttonStates = Array.from({ length: $rows.length }, () => Array(16).fill(false));
+
+$rows.forEach(($row, i) => {
+  const buttons = $row.querySelectorAll('.color-button');
+
+  buttons.forEach((button, j) => {
+    button.addEventListener('click', () =>{
+      buttonStates[i][j] = !buttonStates[i][j];
+      button.classList.toggle('active');
+    });
+  });
+});
+
+// TONE LOOP SETTING
+
 let index = 0;
 
-function getRandomArbitrary(min, max) {
-  return Math.random() * (max - min) + min;
-}
-
-function getRandomInt(min, max) {
-  min = Math.ceil(min);  // Redondea hacia arriba para incluir el mínimo
-  max = Math.floor(max); // Redondea hacia abajo para excluir el máximo
-  return Math.floor(Math.random() * (max - min)) + min;
-}
-
-// Crear un loop que repite cada '8n' (una octava nota)
 const loop = new Tone.Loop((time) => {
-  
+
   let step = index % 16;
+
+  $rows.forEach(($row, i) => {
+    const buttons = $row.querySelectorAll('.color-button');
+  
+    buttons.forEach((button, j) => {
+      button.classList.remove('current');
+    });
+    buttons[step].classList.add('current');
+  });
 
   clapAction.stop();
   initialPoseAction.play();
@@ -80,37 +95,30 @@ const loop = new Tone.Loop((time) => {
 
     hipsUpAction.stop();
     hipsUpAction.reset();
-} else {
+  } else {
     // // Reproducir hipsUp
     hipsUpAction.play();     // Reproducir la animación
 
     // // // Detener hipsDown
     hipsDownAction.stop();
     hipsDownAction.reset();
-}
+  }
 
   // if(step % 4 == 0){
   //   metronome.triggerAttackRelease('A4', '16n', time);
   // }
 
-  for (let i = 0; i < $rows.length; i++) {
-    let $row = $rows[i];
+  for (let i = 0; i < buttonStates.length; i++) {
+    // let $row = $rows[i];
     let note = notes[i];
-    let $input = $row.querySelector(`input:nth-child(${step + 1})`);
+    // let $input = $row.querySelector(`input:nth-child(${step + 1})`);
 
-    if ($input.checked) {
+    let state = buttonStates[i][step];
 
+    if(state){
       tr808.player(note).start(time);
-
-      // if (i == 1) {
-      //   snare.triggerAttack(time);
-      // }
-      // else {
-      //   synth.triggerAttackRelease(note, '16n', time);
-      // }
-
-      if(i == 0){
-        if(torsoSide == 0){
+      if (i == 0) {
+        if (torsoSide == 0) {
 
           torsoLeftAction.play();
 
@@ -119,7 +127,7 @@ const loop = new Tone.Loop((time) => {
 
           torsoSide = 1;
         }
-        else{
+        else {
 
           torsoRightAction.play();
 
@@ -136,7 +144,7 @@ const loop = new Tone.Loop((time) => {
       }
 
       if (i == 2) {
-        if(headNod == false){
+        if (headNod == false) {
 
           headNodInAction.play();
 
@@ -145,7 +153,7 @@ const loop = new Tone.Loop((time) => {
 
           headNod = true;
         }
-        else{
+        else {
 
           headNodOutAction.play();
 
@@ -156,7 +164,7 @@ const loop = new Tone.Loop((time) => {
         }
       }
 
-      if(i == 3) {
+      if (i == 3) {
         armsAction.stop();
         initialPoseAction.stop();
         clapAction.stop();
@@ -174,12 +182,12 @@ Tone.Transport.start();
 loop.start(0);  // Empieza en el tiempo 0
 
 // Escuchar el clic en el botón para iniciar el audio
-document.getElementById('startButton').addEventListener('click', async () => {
+document.getElementById('start-button').addEventListener('click', async () => {
   await Tone.start();
 
   console.log('Audio started');
 
-  document.getElementById('startButton').style.display = 'none';
+  // document.getElementById('startButton').style.display = 'none';
 
 });
 
@@ -213,7 +221,7 @@ directionalLight.shadow.camera.far = 50;     // Distancia máxima de la sombra
 // Crear un plano para que sea el shadow catcher
 const planeGeometry = new THREE.PlaneGeometry(10, 10);
 const planeMaterial = new THREE.MeshStandardMaterial({
-  color: 'blue', // Color verde
+  color: '#ecf0f1', // Color verde
   roughness: 0.5,  // Control de la rugosidad para efectos de luz
   metalness: 0.0,  // Control de la metálicidad
   side: THREE.DoubleSide // Mostrar en ambos lados
@@ -231,9 +239,9 @@ scene.add(plane);
 // directionalLight2.position.set(-5, -10, 7.5);
 // scene.add(directionalLight2);
 
-loader.load('src/Englishman_simplerig_v06.glb', function (gltf) {
+loader.load('models/human_model_v01.glb', function (gltf) {
   scene.add(gltf.scene);
-  
+
   character = gltf.scene;
   character.castShadow = true;
 
@@ -244,12 +252,12 @@ loader.load('src/Englishman_simplerig_v06.glb', function (gltf) {
 
   character.traverse(function (object) {
 
-    if(object.isMesh){
+    if (object.isMesh) {
       object.castShadow = true;
       object.receiveShadow = true;
     }
 
-    if(object.name == 'jacket'){
+    if (object.name == 'jacket') {
       char.jacket = object;
       char.jacket.visible = false;
     }
@@ -323,8 +331,8 @@ loader.load('src/Englishman_simplerig_v06.glb', function (gltf) {
 
   const animations = gltf.animations;
 
-  if(animations && animations.length){
-  
+  if (animations && animations.length) {
+
     mixer = new THREE.AnimationMixer(character);
 
     console.log(animations);
@@ -341,12 +349,12 @@ loader.load('src/Englishman_simplerig_v06.glb', function (gltf) {
 
     const filteredHipsUpAnimation = filterTracksForBones(hipsUpAnimation, ['mixamorigHips', 'mixamorigUpLegL', 'mixamorigLegL', 'mixamorigFootL', 'mixamorigUpLegR', 'mixamorigLegR', 'mixamorigFootR']);
     hipsUpAction = mixer.clipAction(filteredHipsUpAnimation);
-    hipsUpAction.setLoop(THREE.LoopOnce, 1); 
+    hipsUpAction.setLoop(THREE.LoopOnce, 1);
     hipsUpAction.clampWhenFinished = true;
 
     const filteredHipsDownAnimation = filterTracksForBones(hipsDownAnimation, ['mixamorigHips', 'mixamorigUpLegL', 'mixamorigLegL', 'mixamorigFootL', 'mixamorigUpLegR', 'mixamorigLegR', 'mixamorigFootR']);
     hipsDownAction = mixer.clipAction(filteredHipsDownAnimation);
-    hipsDownAction.setLoop(THREE.LoopOnce, 1); 
+    hipsDownAction.setLoop(THREE.LoopOnce, 1);
     hipsDownAction.clampWhenFinished = true;
 
     const filteredArmsAnimation = filterTracksForBones(armsAnimation, ['mixamorigShoulderL', 'mixamorigShoulderR', 'mixamorigArmL', 'mixamorigArmR']);
@@ -371,18 +379,18 @@ loader.load('src/Englishman_simplerig_v06.glb', function (gltf) {
 
     const filteredHeadNodInAnimation = filterTracksForBones(headNodInAnimation, ['mixamorigNeck', 'mixamorigHead']);
     headNodInAction = mixer.clipAction(filteredHeadNodInAnimation);
-    headNodInAction.setLoop(THREE.LoopOnce, 1); 
+    headNodInAction.setLoop(THREE.LoopOnce, 1);
     headNodInAction.clampWhenFinished = true;
 
     const filteredHeadNodOutAnimation = filterTracksForBones(headNodOutAnimation, ['mixamorigNeck', 'mixamorigHead']);
     headNodOutAction = mixer.clipAction(filteredHeadNodOutAnimation);
-    headNodOutAction.setLoop(THREE.LoopOnce, 1); 
+    headNodOutAction.setLoop(THREE.LoopOnce, 1);
     headNodOutAction.clampWhenFinished = true;
 
     initialPoseAction = mixer.clipAction(initialPoseAnimation);
     initialPoseAction.paused = true;
     initialPoseAction.play();
-    
+
   }
 
   console.log(char);
@@ -402,15 +410,15 @@ loader.load('src/Englishman_simplerig_v06.glb', function (gltf) {
     const deltaTime = time - lastFrameTime;
 
     if (deltaTime >= frameDuration) {
-        lastFrameTime = time - (deltaTime % frameDuration);  // Resetear el tiempo de inicio del frame
+      lastFrameTime = time - (deltaTime % frameDuration);  // Resetear el tiempo de inicio del frame
 
-        // Actualizar la escena, animaciones y renderizar
-        const delta = clock.getDelta();
+      // Actualizar la escena, animaciones y renderizar
+      const delta = clock.getDelta();
 
-        character.rotation.y += Math.sin(delta/2);
+      character.rotation.y += Math.sin(delta / 2);
 
-        mixer.update(delta);  // Actualiza las animaciones
-        renderer.render(scene, camera);
+      mixer.update(delta);  // Actualiza las animaciones
+      renderer.render(scene, camera);
     }
 
     requestAnimationFrame(animate);
@@ -446,7 +454,7 @@ function animateRotation(object, amount, duration, original) {
   });
 }
 
-function animatePosition(object, amount, duration, original){
+function animatePosition(object, amount, duration, original) {
   gsap.to(object.position, {
     x: object.position.x + amount[0],
     y: object.position.y + amount[1],
@@ -471,22 +479,32 @@ function filterTracksForBones(animationClip, boneNames) {
 
   // Recorrer todas las pistas de la animación (KeyframeTracks)
   animationClip.tracks.forEach(track => {
-      // Chequear si el track está animando un hueso en la lista de huesos
-      const trackName = track.name;
-      // Verificar si alguno de los huesos está en el nombre del track
-      // Por ejemplo, el nombre de un track puede ser algo como 'Hips.position' o 'Hips.quaternion'
-      const isBoneTrack = boneNames.some(boneName => trackName.includes(boneName));
+    // Chequear si el track está animando un hueso en la lista de huesos
+    const trackName = track.name;
+    // Verificar si alguno de los huesos está en el nombre del track
+    // Por ejemplo, el nombre de un track puede ser algo como 'Hips.position' o 'Hips.quaternion'
+    const isBoneTrack = boneNames.some(boneName => trackName.includes(boneName));
 
-      if (isBoneTrack) {
-          // Si el track pertenece a uno de los huesos que queremos, lo añadimos a la lista filtrada
-          filteredTracks.push(track);
-      }
+    if (isBoneTrack) {
+      // Si el track pertenece a uno de los huesos que queremos, lo añadimos a la lista filtrada
+      filteredTracks.push(track);
+    }
   });
 
   // Crear un nuevo AnimationClip con las pistas filtradas
   return new THREE.AnimationClip(
-      animationClip.name, // Mantener el nombre original del clip
-      animationClip.duration, // Mantener la duración original del clip
-      filteredTracks // Las pistas que hemos filtrado
+    animationClip.name, // Mantener el nombre original del clip
+    animationClip.duration, // Mantener la duración original del clip
+    filteredTracks // Las pistas que hemos filtrado
   );
+}
+
+function getRandomArbitrary(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function getRandomInt(min, max) {
+  min = Math.ceil(min);  // Redondea hacia arriba para incluir el mínimo
+  max = Math.floor(max); // Redondea hacia abajo para excluir el máximo
+  return Math.floor(Math.random() * (max - min)) + min;
 }
