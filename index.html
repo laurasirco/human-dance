@@ -5,21 +5,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dancing Man</title>
-  <script type="module" crossorigin src="/human-dance/assets/index-BGAzgtNt.js"></script>
-  <link rel="stylesheet" crossorigin href="/human-dance/assets/index-Dh7Dj02f.css">
+  <script type="module" crossorigin src="/human-dance/assets/index-CCgTCAog.js"></script>
+  <link rel="stylesheet" crossorigin href="/human-dance/assets/index-O3B5uTXW.css">
 </head>
 
 <body>
-  <section class="section has-background-light">
-  <div class="container">
-    <h1 class="title">Dancing Human</h1>
+  <section class="section is-fluid">
+    <h1 class="title">Sequenced Human</h1>
+  <div class="container is-fluid">
     <div class="columns is-mobile">
-      <div class="column"></div>
       <button id="start-button" class="button column">Play</button>
       <button id="stop-button" class="button column">Stop</button>
-      <button id="reset-button" class="button column">Reset Sequence</button>
+      <button id="reset-button" class="button column">Reset</button>
       <button id="metronome-button" class="button column">Metronome</button>
-      <button id="share-button" class="button column">Share Link</button>
+
+      <div class="column"></div>
+      <!-- <button id="share-button" class="button column">Share Link</button> -->
+
+    </div>
+    <div class="columns is-mobile">
+      <div class="column">
+        <label for="bpm-slider">BPM <span id="bpm-value">120</span></label>
+        <span></span>
+        <input type="range" id="bpm-slider" min="60" max="200" value="120">
+      </div>
     </div>
     <div class="button-row columns is-mobile">
       <p class="column">00</p>
@@ -202,10 +211,10 @@
       <button class="button column chords-button"></button>
       <button class="button column chords-button"></button>
     </div>
-    <div id="threejs-container" class="" style="height: 800px;">
-    </div>
   </div>
 </section>
+<div id="threejs-container" class="">
+</div>
 </body>
 
 </html>
