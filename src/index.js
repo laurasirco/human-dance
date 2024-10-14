@@ -3,7 +3,6 @@ import * as THREE from 'three';
 import * as Tone from 'tone';
 import { gsap } from 'gsap';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { mix } from 'three/webgpu';
 
 let character;
 let mixer;
@@ -31,9 +30,8 @@ var tr808 = new Tone.Players({
   37: 'audio/tr808/SD.WAV', //SNARE DRUM
   38: 'audio/tr808/LT.WAV', //TOM
   39: 'audio/tr808/CP.WAV', //CLAP
-  41: 'audio/tr808/OH.WAV', //OPEN HI HAT
-  42: 'audio/tr808/CH.WAV', //HI HAT
-  45: 'audio/tr808/CY.WAV' //CYMBAL
+  41: 'audio/tr808/CH.WAV', //OPEN HI HAT
+  42: 'audio/tr808/OH.WAV', //HI HAT
 });
 
 tr808.toDestination();
@@ -43,7 +41,7 @@ var reverb = new Tone.Reverb({
   preDelay: 0.0
 }).toDestination();
 
-tr808.connect(reverb);
+// tr808.connect(reverb);
 
 var metronome = new Tone.Synth();
 metronome.oscillator.type = 'sine';
@@ -53,7 +51,7 @@ metronome.toDestination();
 const gain = new Tone.Gain(0.6);
 gain.toDestination();
 
-const notes = [35, 37, 38, 39, 41, 42, 45];
+const notes = [35, 37, 38, 39, 41, 42];
 
 var bass = new Tone.Synth({
 });
@@ -79,12 +77,13 @@ let chordsNotes = [
 
 // BUTTONS
 
-const $rows = document.body.querySelectorAll('.button-row');
+const $rows = document.body.querySelectorAll('.seq-row');
 
-let buttonStates = Array.from({ length: $rows.length }, () => Array(8).fill(false));
+let buttonStates = Array.from({ length: $rows.length }, () => Array(16).fill(false));
 
 $rows.forEach(($row, i) => {
-  const buttons = $row.querySelectorAll('.color-button');
+  const buttons = $row.querySelectorAll('.seq-button');
+  
 
   buttons.forEach((button, j) => {
     button.addEventListener('mousedown', () =>{
@@ -94,25 +93,25 @@ $rows.forEach(($row, i) => {
   });
 });
 
-const $chords = document.body.querySelector('.chords-buttons');
-console.log($chords);
+// const $chords = document.body.querySelector('.chords-buttons');
+// console.log($chords);
 
-const chordsButtons = $chords.querySelectorAll('.chords-button');
-chordsButtons.forEach((button, i) => {
-  button.addEventListener('mousedown', async () => {
-    const isToneStarted = await ensureToneStarted();
+// const chordsButtons = $chords.querySelectorAll('.chords-button');
+// chordsButtons.forEach((button, i) => {
+//   button.addEventListener('mousedown', async () => {
+//     const isToneStarted = await ensureToneStarted();
     
-    if (isToneStarted) {
-      // Si Tone está corriendo, entonces reproducir el acorde
-      const currentBeat = Tone.Transport.position;
-      const nextBeat = Tone.Transport.nextSubdivision('8n');
-      chords.triggerAttackRelease(chordsNotes[i], '2n', nextBeat);
-      console.log(`Acorde ${i} programado para sonar en el próximo beat: ${nextBeat}`);
-    } else {
-      console.log("Tone.js aún no ha iniciado.");
-    }
-  });
-});
+//     if (isToneStarted) {
+//       // Si Tone está corriendo, entonces reproducir el acorde
+//       const currentBeat = Tone.Transport.position;
+//       const nextBeat = Tone.Transport.nextSubdivision('8n');
+//       chords.triggerAttackRelease(chordsNotes[i], '2n', nextBeat);
+//       console.log(`Acorde ${i} programado para sonar en el próximo beat: ${nextBeat}`);
+//     } else {
+//       console.log("Tone.js aún no ha iniciado.");
+//     }
+//   });
+// });
 
 //URL FROM
 
@@ -146,7 +145,7 @@ function getSequenceFromUrl() {
 }
 
 // Evento para el botón "Compartir"
-document.getElementById('share-button').addEventListener('click', () => {
+document.getElementById('share').addEventListener('click', () => {
   const shareableUrl = createShareableLink(buttonStates, Tone.Transport.bpm.value);
   console.log(shareableUrl);
 
@@ -179,7 +178,7 @@ window.onload = function() {
     buttonStates = sharedSequence;
 
     $rows.forEach(($row, i) => {
-      const buttons = $row.querySelectorAll('.color-button');
+      const buttons = $row.querySelectorAll('.seq-button');
     
       buttons.forEach((button, j) => {
         if(buttonStates[i][j]){
@@ -208,10 +207,10 @@ let index = 0;
 
 const loop = new Tone.Loop((time) => {
 
-  let step = index % 8;
+  let step = index % 16;
 
   $rows.forEach(($row, i) => {
-    const buttons = $row.querySelectorAll('.color-button');
+    const buttons = $row.querySelectorAll('.seq-button');
   
     buttons.forEach((button, j) => {
       button.classList.remove('current');
@@ -247,17 +246,18 @@ const loop = new Tone.Loop((time) => {
     // let $input = $row.querySelector(`input:nth-child(${step + 1})`);
 
     let state = buttonStates[i][step];
-
+    
     if(state){
 
-      if(i <= 6){
+      if(i <= 5){
         tr808.player(note).start(time);
       }
       else{
-        if(i == 7){
-          bass.triggerAttackRelease("D2", '8n', time);
+        if(i == 6){
+          bass.triggerAttackRelease("D2", '16n', time);
         }
       }
+
       if (i == 0) {
         if (torsoSide == 0) {
 
@@ -399,7 +399,7 @@ const loop = new Tone.Loop((time) => {
   }
   index++;
 
-}, "8n");
+}, "16n");
 
 // Iniciar el loop
 Tone.Transport.bpm.value = 120;
@@ -408,21 +408,21 @@ loop.start(0);  // Empieza en el tiempo 0
 
 // BOTONES DEL LOOP
 
-document.getElementById('stop-button').addEventListener('mousedown', () => {
+document.getElementById('stop').addEventListener('mousedown', () => {
   loop.stop();
 });
 
 // Escuchar el clic en el botón para iniciar el audio
-document.getElementById('start-button').addEventListener('mousedown', async () => {
+document.getElementById('play').addEventListener('mousedown', async () => {
   await Tone.start();
 
   loop.start();
 
 });
 
-document.getElementById('reset-button').addEventListener('mousedown', () =>{
+document.getElementById('reset').addEventListener('mousedown', () =>{
   $rows.forEach(($row, i) => {
-    const buttons = $row.querySelectorAll('.color-button');
+    const buttons = $row.querySelectorAll('.seq-button');
   
     buttons.forEach((button, j) => {
       buttonStates[i][j] = false;
@@ -447,18 +447,18 @@ document.getElementById('reset-button').addEventListener('mousedown', () =>{
   });
 });
 
-document.getElementById('metronome-button').addEventListener('mousedown', () => {
-  metronomeEnabled = !metronomeEnabled;
-});
+// document.getElementById('metronome-button').addEventListener('mousedown', () => {
+//   metronomeEnabled = !metronomeEnabled;
+// });
 
-const bpmSlider = document.getElementById('bpm-slider');
-const bpmValue = document.getElementById('bpm-value');
+// const bpmSlider = document.getElementById('bpm-slider');
+// const bpmValue = document.getElementById('bpm-value');
 
-bpmSlider.addEventListener('input', (event) => {
-  const bpm = event.target.value;
-  Tone.Transport.bpm.value = bpm; // Cambiar el BPM del transporte global
-  bpmValue.textContent = bpm; // Mostrar el valor del BPM actual
-});
+// bpmSlider.addEventListener('input', (event) => {
+//   const bpm = event.target.value;
+//   Tone.Transport.bpm.value = bpm; // Cambiar el BPM del transporte global
+//   bpmValue.textContent = bpm; // Mostrar el valor del BPM actual
+// });
 
 //THREE JS PART
 
@@ -468,11 +468,11 @@ const container = document.getElementById("threejs-container");
 const containerWidth = container.offsetWidth;
 const containerHeight = container.offsetHeight;
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.setSize(containerWidth, containerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.setClearColor(0x000000, 0); 
+// renderer.setClearColor(0x000000, 0); 
 
 container.appendChild(renderer.domElement);
 
@@ -530,7 +530,7 @@ loader.load('models/human_model_v01.glb', function (gltf) {
   char.skinnedMesh = skinnedMesh;
   char.skeleton = ske;
 
-  console.log(ske);
+  // console.log(ske);
 
   character.traverse(function (object) {
 
@@ -617,7 +617,7 @@ loader.load('models/human_model_v01.glb', function (gltf) {
 
     mixer = new THREE.AnimationMixer(character);
 
-    console.log(animations);
+    // console.log(animations);
 
     const hipsUpAnimation = THREE.AnimationClip.findByName(animations, 'HipsUp');
     const hipsDownAnimation = THREE.AnimationClip.findByName(animations, 'HipsDown');
