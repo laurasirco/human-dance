@@ -5,149 +5,191 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dancing Man</title>
-  <script type="module" crossorigin src="/human-dance/assets/index-PF6yaERd.js"></script>
-  <link rel="stylesheet" crossorigin href="/human-dance/assets/index-DqUDxPEK.css">
+  <script type="module" crossorigin src="/human-dance/assets/index-BcxPnYKE.js"></script>
+  <link rel="stylesheet" crossorigin href="/human-dance/assets/index-CV4VMYMh.css">
 </head>
 
 <body>
-  <div id="sequencer">
-    <div>
-      <button id="start-button">Start Audio</button>
+  <section class="section is-fluid">
+    <h1 class="title">Sequenced Human</h1>
+  <div class="container is-fluid">
+    <div class="columns is-mobile">
+      <button id="start-button" class="button column">Play</button>
+      <button id="stop-button" class="button column">Stop</button>
+      <button id="reset-button" class="button column">Reset</button>
+      <button id="metronome-button" class="button column">Metronome</button>
+      <div class="column">
+        <label for="bpm-slider">BPM <span id="bpm-value">120</span></label>
+        <span></span>
+        <input type="range" id="bpm-slider" min="60" max="200" value="120">
+      </div>
+      <button id="share-button" class="button column">Share</button>
+
     </div>
-    <div class="button-row">
-      <span class="row-label">Bass Drum</span>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
+    <div class="columns is-mobile">
     </div>
-    <div class="button-row">
-      <span class="row-label">Rim Shot</span>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
+    <div class="button-row columns is-mobile">
+      <img src="img/icons/i_bass_drum.svg" alt="Bass Drum"></i>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <!-- <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button> -->
     </div>
-    <div class="button-row">
-      <span class="row-label">Snare Drum</span>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
+    <div class="button-row columns is-mobile">
+      <img src="img/icons/i_snare.svg" alt="Snare"></i>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <!-- <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button> -->
     </div>
-    <div class="button-row">
-      <span class="row-label">Clap</span>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
+    <div class="button-row columns is-mobile">
+      <img src="img/icons/i_tom.svg" alt="Tom"></i>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <!-- <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button> -->
     </div>
-    <div class="button-row">
-      <span class="row-label">Low Tom</span>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
+    <div class="button-row columns is-mobile">
+      <img src="img/icons/i_clap.svg" alt="Clap"></i>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <!-- <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button> -->
     </div>
-    <div class="button-row">
-      <span class="row-label">Closed HiHat</span>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
+    <div class="button-row columns is-mobile">
+      <img src="img/icons/i_hihat.svg" alt="Open Hi Hat"></i>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <!-- <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button> -->
     </div>
-    <div class="button-row">
-      <span class="row-label">Open HiHat</span>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
-      <button class="color-button"></button>
+    <div class="button-row columns is-mobile">
+      <img src="img/icons/i_cymbal.svg" alt="Hi Hat"></i>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <!-- <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button> -->
+    </div>
+    <div class="button-row columns is-mobile">
+      <img src="img/icons/i_cymbals.svg" alt="Cymbal"></i>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <!-- <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button> -->
+    </div>
+    <div class="button-row columns is-mobile">
+      <img src="img/icons/i_bass.svg" alt="Bass"></i>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <!-- <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button>
+      <button class="button column color-button"></button> -->
+    </div>
+    <div class="chords-buttons columns is-mobile">
+      <img src="img/icons/i_keyboard.svg" alt="Keyboard"></i>
+      <button class="button column chords-button"></button>
+      <button class="button column chords-button"></button>
+      <button class="button column chords-button"></button>
     </div>
   </div>
+</section>
+<div id="threejs-container" class="">
+</div>
 </body>
 
 </html>

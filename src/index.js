@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import * as Tone from 'tone';
 import { gsap } from 'gsap';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { mix } from 'three/webgpu';
 
 let character;
 let mixer;
@@ -10,27 +11,29 @@ let mixer;
 let char = {};
 
 var hipsUpAction, hipsDownAction;
-var armsAction;
+var leftKickAction, rightKickAction;
+var armsAction, robotArmsRightAction, robotArmsLeftAction;
 var torsoLeftAction, torsoRightAction;
-var headNodInAction, headNodOutAction;
+var headNodInAction, headNodOutAction, headNodLeftAction, headNodRightAction;
 var clapAction;
 var initialPoseAction;
 var torsoSide = 0;
+var robotArmsSide = 0;
+var kickSide = 0;
 var headNod = false;
+var headNodSide = 0;
+var metronomeEnabled = false;
 
 // TONE PART
 
 var tr808 = new Tone.Players({
-  35: 'audio/tr808/BD.WAV',
-  37: 'audio/tr808/RS.WAV',
-  38: 'audio/tr808/SD.WAV',
-  39: 'audio/tr808/CP.WAV',
-  41: 'audio/tr808/LT.WAV',
-  42: 'audio/tr808/CH.WAV',
-  45: 'audio/tr808/MT.WAV',
-  46: 'audio/tr808/OH.WAV',
-  48: 'audio/tr808/HT.WAV',
-  49: 'audio/tr808/CY.WAV'
+  35: 'audio/tr808/BD.WAV', //BASS DRUM
+  37: 'audio/tr808/SD.WAV', //SNARE DRUM
+  38: 'audio/tr808/LT.WAV', //TOM
+  39: 'audio/tr808/CP.WAV', //CLAP
+  41: 'audio/tr808/OH.WAV', //OPEN HI HAT
+  42: 'audio/tr808/CH.WAV', //HI HAT
+  45: 'audio/tr808/CY.WAV' //CYMBAL
 });
 
 tr808.toDestination();
@@ -50,24 +53,154 @@ metronome.toDestination();
 const gain = new Tone.Gain(0.6);
 gain.toDestination();
 
-const notes = [35, 37, 38, 39, 41, 42, 46];
+const notes = [35, 37, 38, 39, 41, 42, 45];
+
+var bass = new Tone.Synth({
+});
+bass.oscillator.type = "triangle";
+bass.connect(reverb);
+bass.toDestination();
+
+var chords = new Tone.PolySynth({
+}).toDestination();
+chords.connect(reverb);
+
+chords.set({
+	"envelope" : {
+		"attack" : 0.0
+	}
+});
+
+let chordsNotes = [
+  ['A3', 'C3', 'E4', 'B4'],
+  ['F3', 'A3', 'C4', 'E4'],
+  ['G3', 'B3', 'D4', 'A4']
+];
 
 // BUTTONS
 
 const $rows = document.body.querySelectorAll('.button-row');
 
-let buttonStates = Array.from({ length: $rows.length }, () => Array(16).fill(false));
+let buttonStates = Array.from({ length: $rows.length }, () => Array(8).fill(false));
 
 $rows.forEach(($row, i) => {
   const buttons = $row.querySelectorAll('.color-button');
 
   buttons.forEach((button, j) => {
-    button.addEventListener('click', () =>{
+    button.addEventListener('mousedown', () =>{
       buttonStates[i][j] = !buttonStates[i][j];
       button.classList.toggle('active');
     });
   });
 });
+
+const $chords = document.body.querySelector('.chords-buttons');
+console.log($chords);
+
+const chordsButtons = $chords.querySelectorAll('.chords-button');
+chordsButtons.forEach((button, i) => {
+  button.addEventListener('mousedown', async () => {
+    const isToneStarted = await ensureToneStarted();
+    
+    if (isToneStarted) {
+      // Si Tone está corriendo, entonces reproducir el acorde
+      const currentBeat = Tone.Transport.position;
+      const nextBeat = Tone.Transport.nextSubdivision('8n');
+      chords.triggerAttackRelease(chordsNotes[i], '2n', nextBeat);
+      console.log(`Acorde ${i} programado para sonar en el próximo beat: ${nextBeat}`);
+    } else {
+      console.log("Tone.js aún no ha iniciado.");
+    }
+  });
+});
+
+//URL FROM
+
+// Función para crear una URL con la secuencia en la query string
+function createShareableLink(sequence, bpm) {
+  // Convertir el array en una cadena JSON y codificarla
+  const encodedSequence = encodeURIComponent(JSON.stringify(sequence));
+  
+  // Crear la URL actual con el parámetro `sequence`
+  const baseUrl = window.location.origin + window.location.pathname;
+  const shareableUrl = `${baseUrl}?sequence=${encodedSequence}&bpm=${bpm}`;
+  
+  return shareableUrl;
+}
+
+// Función para obtener la secuencia desde la query string
+function getSequenceFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  
+  if (params.has('sequence')) {
+    const encodedSequence = params.get('sequence');
+    try {
+      // Decodificar y convertir de nuevo a array de booleanos
+      const decodedSequence = JSON.parse(decodeURIComponent(encodedSequence));
+      return decodedSequence;
+    } catch (e) {
+      console.error('Error al decodificar la secuencia:', e);
+    }
+  }
+  return null;
+}
+
+// Evento para el botón "Compartir"
+document.getElementById('share-button').addEventListener('click', () => {
+  const shareableUrl = createShareableLink(buttonStates, Tone.Transport.bpm.value);
+  console.log(shareableUrl);
+
+    // Verificar si la API del portapapeles está disponible
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      // Si está disponible, copiar el enlace al portapapeles
+      navigator.clipboard.writeText(shareableUrl).then(() => {
+        alert("Shared link copied");
+      }).catch(err => {
+        console.error('Error al copiar el enlace:', err);
+      });
+    } else {
+      // Si no está disponible, usar un campo de entrada como alternativa
+      let tempInput = document.createElement('input');
+      tempInput.value = shareableUrl;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+      alert("Shared link copied");
+    }
+
+});
+
+window.onload = function() {
+  const sharedSequence = getSequenceFromUrl();
+  if (sharedSequence) {
+    // Aquí puedes cargar la secuencia en tu UI
+    console.log("Secuencia cargada desde URL:");
+    buttonStates = sharedSequence;
+
+    $rows.forEach(($row, i) => {
+      const buttons = $row.querySelectorAll('.color-button');
+    
+      buttons.forEach((button, j) => {
+        if(buttonStates[i][j]){
+          button.classList.add('active');
+        }
+        else{
+          button.classList.remove('active');
+        }
+      });
+    });
+  }
+  const params = new URLSearchParams(window.location.search);
+
+  if(params.has('bpm')){
+    const bpm = params.get('bpm');
+
+    Tone.Transport.bpm.value = bpm; // Cambiar el BPM del transporte global
+    bpmValue.textContent = bpm; // Mostrar el valor del BPM actual
+    bpmSlider.value = bpm;
+  }
+};
 
 // TONE LOOP SETTING
 
@@ -75,7 +208,7 @@ let index = 0;
 
 const loop = new Tone.Loop((time) => {
 
-  let step = index % 16;
+  let step = index % 8;
 
   $rows.forEach(($row, i) => {
     const buttons = $row.querySelectorAll('.color-button');
@@ -89,24 +222,24 @@ const loop = new Tone.Loop((time) => {
   clapAction.stop();
   initialPoseAction.play();
 
-  if (step % 2 === 0) {  // Cambiar el criterio de alternancia según sea necesario
-    // Reproducir hipsDown
-    hipsDownAction.play();   // Reproducir la animación
+  if (step % 2 === 0) { 
+    hipsDownAction.play(); 
 
     hipsUpAction.stop();
     hipsUpAction.reset();
-  } else {
-    // // Reproducir hipsUp
-    hipsUpAction.play();     // Reproducir la animación
 
-    // // // Detener hipsDown
+    // animateRotation(char.spine00, [getRandomArbitrary(-0.2, 0.2), 0, getRandomArbitrary(-0.2, 0.2)], 1.0, {"x": 0, "y": 0, "z": 0});
+
+  } else {
+    hipsUpAction.play();
+
     hipsDownAction.stop();
     hipsDownAction.reset();
   }
 
-  // if(step % 4 == 0){
-  //   metronome.triggerAttackRelease('A4', '16n', time);
-  // }
+  if(step % 2 == 0 && metronomeEnabled){
+    metronome.triggerAttackRelease('A4', '16n', time);
+  }
 
   for (let i = 0; i < buttonStates.length; i++) {
     // let $row = $rows[i];
@@ -116,7 +249,15 @@ const loop = new Tone.Loop((time) => {
     let state = buttonStates[i][step];
 
     if(state){
-      tr808.player(note).start(time);
+
+      if(i <= 6){
+        tr808.player(note).start(time);
+      }
+      else{
+        if(i == 7){
+          bass.triggerAttackRelease("D2", '8n', time);
+        }
+      }
       if (i == 0) {
         if (torsoSide == 0) {
 
@@ -146,6 +287,9 @@ const loop = new Tone.Loop((time) => {
       if (i == 2) {
         if (headNod == false) {
 
+          headNodLeftAction.stop();
+          headNodRightAction.stop();
+
           headNodInAction.play();
 
           headNodOutAction.stop();
@@ -154,6 +298,9 @@ const loop = new Tone.Loop((time) => {
           headNod = true;
         }
         else {
+
+          headNodLeftAction.stop();
+          headNodRightAction.stop();
 
           headNodOutAction.play();
 
@@ -167,8 +314,86 @@ const loop = new Tone.Loop((time) => {
       if (i == 3) {
         armsAction.stop();
         initialPoseAction.stop();
+        robotArmsLeftAction.stop();
+        robotArmsRightAction.stop();
+
         clapAction.stop();
         clapAction.play();
+      }
+
+      if(i == 4){
+        if (robotArmsSide == 0) {
+
+          robotArmsLeftAction.play();
+
+          robotArmsRightAction.stop();
+          robotArmsRightAction.reset();
+
+          robotArmsSide = 1;
+        }
+        else {
+
+          robotArmsRightAction.play();
+
+          robotArmsLeftAction.stop();
+          robotArmsLeftAction.reset();
+
+          robotArmsSide = 0;
+        }
+      }
+
+      if(i == 5){
+        if (headNodSide == 0) {
+
+          headNodInAction.stop();
+          headNodOutAction.stop();
+
+          headNodLeftAction.play();
+
+          headNodRightAction.stop();
+          headNodRightAction.reset();
+
+          headNodSide = 1;
+        }
+        else {
+
+          headNodInAction.stop();
+          headNodOutAction.stop();
+
+          headNodRightAction.play();
+
+          headNodLeftAction.stop();
+          headNodLeftAction.reset();
+
+          headNodSide = 0;
+        }
+      }
+
+      if(i == 6){
+        if (kickSide == 0) {
+
+          // hipsUpAction.stop();
+          // hipsDownAction.stop();
+
+          leftKickAction.play();
+
+          rightKickAction.stop();
+          rightKickAction.reset();
+
+          kickSide = 1;
+        }
+        else {
+
+          // hipsUpAction.stop();
+          // hipsDownAction.stop();
+
+          rightKickAction.play();
+
+          leftKickAction.stop();
+          leftKickAction.reset();
+
+          kickSide = 0;
+        }
       }
     }
   }
@@ -181,27 +406,86 @@ Tone.Transport.bpm.value = 120;
 Tone.Transport.start();
 loop.start(0);  // Empieza en el tiempo 0
 
+// BOTONES DEL LOOP
+
+document.getElementById('stop-button').addEventListener('mousedown', () => {
+  loop.stop();
+});
+
 // Escuchar el clic en el botón para iniciar el audio
-document.getElementById('start-button').addEventListener('click', async () => {
+document.getElementById('start-button').addEventListener('mousedown', async () => {
   await Tone.start();
 
-  console.log('Audio started');
+  loop.start();
 
-  // document.getElementById('startButton').style.display = 'none';
+});
 
+document.getElementById('reset-button').addEventListener('mousedown', () =>{
+  $rows.forEach(($row, i) => {
+    const buttons = $row.querySelectorAll('.color-button');
+  
+    buttons.forEach((button, j) => {
+      buttonStates[i][j] = false;
+      button.classList.remove('active');
+    });
+
+    hipsDownAction.stop();
+    hipsUpAction.stop();
+    headNodInAction.stop();
+    headNodOutAction.stop();
+    armsAction.stop();
+    leftKickAction.stop();
+    rightKickAction.stop();
+    headNodLeftAction.stop();
+    headNodRightAction.stop();
+    torsoLeftAction.stop();
+    torsoRightAction.stop();
+    robotArmsLeftAction.stop();
+    robotArmsRightAction.stop();
+    clapAction.stop();
+
+  });
+});
+
+document.getElementById('metronome-button').addEventListener('mousedown', () => {
+  metronomeEnabled = !metronomeEnabled;
+});
+
+const bpmSlider = document.getElementById('bpm-slider');
+const bpmValue = document.getElementById('bpm-value');
+
+bpmSlider.addEventListener('input', (event) => {
+  const bpm = event.target.value;
+  Tone.Transport.bpm.value = bpm; // Cambiar el BPM del transporte global
+  bpmValue.textContent = bpm; // Mostrar el valor del BPM actual
 });
 
 //THREE JS PART
 
 const loader = new GLTFLoader();
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const container = document.getElementById("threejs-container");
+const containerWidth = container.offsetWidth;
+const containerHeight = container.offsetHeight;
 
-const renderer = new THREE.WebGLRenderer({ alpha: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(containerWidth, containerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-document.body.appendChild(renderer.domElement);
+renderer.setClearColor(0x000000, 0); 
+
+container.appendChild(renderer.domElement);
+
+const camera = new THREE.PerspectiveCamera(50, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+
+// Handle window resizing
+window.addEventListener('resize', () => {
+  const newWidth = container.offsetWidth;
+  const newHeight = container.offsetHeight;
+  renderer.setSize(newWidth, newHeight);
+  camera.aspect = newWidth / newHeight;
+  camera.updateProjectionMatrix();
+});
 
 // Añadir luces a la escena
 const ambientLight = new THREE.AmbientLight('white', 2);
@@ -220,12 +504,8 @@ directionalLight.shadow.camera.far = 50;     // Distancia máxima de la sombra
 
 // Crear un plano para que sea el shadow catcher
 const planeGeometry = new THREE.PlaneGeometry(10, 10);
-const planeMaterial = new THREE.MeshStandardMaterial({
-  color: '#ecf0f1', // Color verde
-  roughness: 0.5,  // Control de la rugosidad para efectos de luz
-  metalness: 0.0,  // Control de la metálicidad
-  side: THREE.DoubleSide // Mostrar en ambos lados
-});
+const planeMaterial = new THREE.ShadowMaterial();
+planeMaterial.opacity = 0.2;
 const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 
 // Colocarlo en la escena y rotarlo para que quede horizontal
@@ -249,6 +529,8 @@ loader.load('models/human_model_v01.glb', function (gltf) {
   const ske = skinnedMesh.skeleton;
   char.skinnedMesh = skinnedMesh;
   char.skeleton = ske;
+
+  console.log(ske);
 
   character.traverse(function (object) {
 
@@ -339,13 +621,41 @@ loader.load('models/human_model_v01.glb', function (gltf) {
 
     const hipsUpAnimation = THREE.AnimationClip.findByName(animations, 'HipsUp');
     const hipsDownAnimation = THREE.AnimationClip.findByName(animations, 'HipsDown');
+    const buttRightAnimation = THREE.AnimationClip.findByName(animations, 'ButtRight');
+    const buttleftAnimation = THREE.AnimationClip.findByName(animations, 'ButtLeft');
     const armsAnimation = THREE.AnimationClip.findByName(animations, 'Arms');
     const torsoRightAnimation = THREE.AnimationClip.findByName(animations, 'TorsoRight');
     const torsoLeftAnimation = THREE.AnimationClip.findByName(animations, 'TorsoLeft');
     const clapAnimation = THREE.AnimationClip.findByName(animations, 'Clap');
     const headNodInAnimation = THREE.AnimationClip.findByName(animations, 'HeadNodIn');
     const headNodOutAnimation = THREE.AnimationClip.findByName(animations, 'HeadNodOut');
+    const headNodLeftAnimation = THREE.AnimationClip.findByName(animations, 'HeadLeft');
+    const headNodRightAnimation = THREE.AnimationClip.findByName(animations, 'HeadRight');
     const initialPoseAnimation = THREE.AnimationClip.findByName(animations, 'InitialPose');
+    const robotArmsLeft = THREE.AnimationClip.findByName(animations, 'RobotArmsLeft');
+    const robotArmsRight = THREE.AnimationClip.findByName(animations, 'RobotArmsRight');
+    const leftKick = THREE.AnimationClip.findByName(animations, 'KickLeft');
+    const rightKick = THREE.AnimationClip.findByName(animations, 'KickRight');
+
+    const fLeftKick = filterTracksForBones(leftKick, ['mixamorigUpLegL', 'mixamorigLegL', 'mixamorigFootL', 'mixamorigUpLegR', 'mixamorigLegR', 'mixamorigFootR']);
+    leftKickAction = mixer.clipAction(fLeftKick);
+    leftKickAction.setLoop(THREE.LoopOnce, 1);
+    leftKickAction.clampWhenFinished = true;
+
+    const fRightKick = filterTracksForBones(rightKick, ['mixamorigUpLegL', 'mixamorigLegL', 'mixamorigFootL', 'mixamorigUpLegR', 'mixamorigLegR', 'mixamorigFootR']);
+    rightKickAction = mixer.clipAction(fRightKick);
+    rightKickAction.setLoop(THREE.LoopOnce, 1);
+    rightKickAction.clampWhenFinished = true;
+
+    const fRobotArmsLeft = filterTracksForBones(robotArmsLeft, ['mixamorigShoulderL', 'mixamorigShoulderR', 'mixamorigArmL', 'mixamorigArmR', 'mixamorigForeArmL', 'mixamorigForeArmR', 'mixamorigHandL', 'mixamorigHandR']);
+    robotArmsLeftAction = mixer.clipAction(fRobotArmsLeft);
+    robotArmsLeftAction.setLoop(THREE.LoopOnce, 1);
+    robotArmsLeftAction.clampWhenFinished = true;
+
+    const fRobotArmsRight = filterTracksForBones(robotArmsRight, ['mixamorigShoulderL', 'mixamorigShoulderR', 'mixamorigArmL', 'mixamorigArmR', 'mixamorigForeArmL', 'mixamorigForeArmR', 'mixamorigHandL', 'mixamorigHandR']);
+    robotArmsRightAction = mixer.clipAction(fRobotArmsRight);
+    robotArmsRightAction.setLoop(THREE.LoopOnce, 1);
+    robotArmsRightAction.clampWhenFinished = true;
 
     const filteredHipsUpAnimation = filterTracksForBones(hipsUpAnimation, ['mixamorigHips', 'mixamorigUpLegL', 'mixamorigLegL', 'mixamorigFootL', 'mixamorigUpLegR', 'mixamorigLegR', 'mixamorigFootR']);
     hipsUpAction = mixer.clipAction(filteredHipsUpAnimation);
@@ -387,13 +697,22 @@ loader.load('models/human_model_v01.glb', function (gltf) {
     headNodOutAction.setLoop(THREE.LoopOnce, 1);
     headNodOutAction.clampWhenFinished = true;
 
+    const fHeadNodLeftAnimation = filterTracksForBones(headNodLeftAnimation, ['mixamorigNeck', 'mixamorigHead']);
+    headNodLeftAction = mixer.clipAction(fHeadNodLeftAnimation);
+    headNodLeftAction.setLoop(THREE.LoopOnce, 1);
+    headNodLeftAction.clampWhenFinished = true;
+
+    const fHeadNodRightAnimation = filterTracksForBones(headNodRightAnimation, ['mixamorigNeck', 'mixamorigHead']);
+    headNodRightAction = mixer.clipAction(fHeadNodRightAnimation);
+    headNodRightAction.setLoop(THREE.LoopOnce, 1);
+    headNodRightAction.clampWhenFinished = true;
+
     initialPoseAction = mixer.clipAction(initialPoseAnimation);
     initialPoseAction.paused = true;
     initialPoseAction.play();
 
   }
 
-  console.log(char);
 
   const skeletonHelper = new THREE.SkeletonHelper(character);
   // scene.add(skeletonHelper);
@@ -507,4 +826,14 @@ function getRandomInt(min, max) {
   min = Math.ceil(min);  // Redondea hacia arriba para incluir el mínimo
   max = Math.floor(max); // Redondea hacia abajo para excluir el máximo
   return Math.floor(Math.random() * (max - min)) + min;
+}
+
+async function ensureToneStarted() {
+  const state = Tone.context.state;  // Obtener el estado del contexto de audio
+  if (state === 'suspended') {
+    // Si el contexto está suspendido, iniciar Tone
+    await Tone.start();
+    console.log('Tone.js ha sido iniciado');
+  }
+  return Tone.context.state === 'running';  // Verificar si Tone está corriendo
 }

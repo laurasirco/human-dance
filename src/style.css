@@ -1,6 +1,13 @@
+@import 'bulma/css/bulma.css';
+@import 'font-awesome/css/font-awesome.min.css';
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+
 body {
-    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-    line-height: 1.5;
+    font-family: 'Space Mono', monospace;
+    font-size: 16px;
+    background-color: beige;
+    /* line-height: 1.5;
     font-weight: 400;
   
     font-synthesis: none;
@@ -8,65 +15,113 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 
-    background-color: #ecf0f1;
+    background-color: #ecf0f1; */
   }
   
-  canvas {
+
+  .button{
+    font-size: 12px;
+    margin-left: 10px;
+    box-shadow: 0px 6px 0px 0px #000000;
+    background-color:white;
+    border-radius:10px;
+    border:2px solid #000000;
+    display:inline-block;
+    cursor:pointer;
+    color:#000000;
+    font-size:12px;
+    padding:16px 20px;
+    text-decoration:none;
+    width: 30px;
+  }
+
+
+  .button:active, .button.active{
+    box-shadow: 0px 0px 0px 0px #000000;
+    top: 6px;
+  }
+
+  #threejs-container {
     position: absolute;
     top: 0;
     left: 0;
-    z-index: -1; /* Poner la escena detrás de los elementos HTML */
-  }
-  
-  /* Estilos para el h1 */
-  h1 {
-    position: absolute;
-    bottom: 10%;
     width: 100%;
-    text-align: center;
-    font-size: 3em;
-    color: black;
-    z-index: 1; /* Poner el texto delante de la escena */
+    height: 100%;
+    z-index: 2; /* Manda la escena al fondo */
+    background-color: transparent;
+    pointer-events: none;
   }
   
-  #sequencer{
+  /* canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+  } */
+
+  .container{
+    opacity: 0.7;
+    max-width: 100%;
+  }
+
+  .columns {
+    height: 2em; /* Altura deseada */
+    margin-top: 5px;
+  }
+  
+  .columns .column {
+    display: flex;
+    align-items: center; /* Para alinear el contenido verticalmente */
+    justify-content: center; /* Para centrar horizontalmente */
+  }
+  
+  /* canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1; /* Poner la escena detrás de los elementos HTML 
+  } */
+  
+  
+  /* #sequencer{
     position: absolute;
     margin-top: 40px;
     width: 100%;
     text-align: center;
     font-size: 1em;
     color: black;
-    z-index: 1; /* Poner el texto delante de la escena */
-  }
-  
+    z-index: 1;  
+  }*/
+/* 
   body, html {
     margin: 0;
     padding: 0;
     height: 100%;
     overflow: hidden;
-  }
+  } */
 
   /* Estilos para los checkbox con texto a la izquierda */
 .button-row {
-  display: flex;
+  /* display: flex;
   justify-content: center;
   align-items: center;
-  margin: 10px;
+  margin: 10px; */
 }
 
 /* Estilo de los botones */
 .color-button {
-  background-color: white; /* Green */
+  /* background-color: white;
   border: none;
   color: #bdc3c7;
   text-align: center;
   text-decoration: none;
   display: inline-block;
   font-size: 16px;
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
-  box-shadow: 0 1px 1px 0 rgba(0,0,0,0.2), 0 1px 1px 0 rgba(0,0,0,0.19);
+  width: 3em;
+  height: 1.5em;
+  border-radius: 0.3em;
+  margin: 0.2em;
+  box-shadow: 0 1px 1px 0 rgba(0,0,0,0.2), 0 1px 1px 0 rgba(0,0,0,0.19); */
 }
 
 /* Cambiar el color al hacer clic (activo) */
@@ -75,25 +130,13 @@ body {
 }
 
 .color-button.current {
-  background-color: #9b59b6; /* Cambiar a color verde cuando esté pulsado */
+  background-color: hotpink; /* Cambiar a color verde cuando esté pulsado */
 }
 
 .row-label {
-  margin-right: 20px; /* Separación entre el texto y los botones */
+  /* margin-right: 20px;
   font-weight: bold;
   font-size: 16px;
-  min-width: 100px; /* Ancho mínimo para alinear etiquetas */
-  text-align: right;
-}
-
-#start-button {
-  background-color: white; /* Green */
-  border: none;
-  color: #bdc3c7;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 20px;
-  border-radius: 5px;
-  box-shadow: 0 1px 1px 0 rgba(0,0,0,0.2), 0 1px 1px 0 rgba(0,0,0,0.19);
+  min-width: 100px;
+  text-align: right; */
 }
