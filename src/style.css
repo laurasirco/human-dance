@@ -2,51 +2,71 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap');
 
-html, body{
+body{
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow: hidden;
   font-family: sans-serif;
-}
-
-#bg-canvas{
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  background-color: white;
-}
-
-#threejs-container{
-  display: block;
-  width: 100%;
-  height: 100%;
+  display: flex;
 }
 
 #ui {
-  position: fixed;
-  top: 0;
-  left: 0;
   width: 400px; /* Ancho fijo de la columna */
-  height: 100%;
+  height: 100vh;
   background-color: #EAEAEA; /* Fondo semitransparente */
   z-index: 2; /* Z-index mayor que el canvas */
-  padding: 20px;
+  padding: 16px;
+  overflow-y: scroll;
+  box-sizing: border-box;
+  scrollbar-width: none; /* Ocultar scrollbar en Firefox */
+
+}
+
+#ui::-webkit-scrollbar {
+  display: none; /* Ocultar scrollbar */
+}
+
+#threejs-container{
+  flex-grow: 1;
+  background-color: white;
+  display: block;
+}
+
+#chords {
+  position: absolute; /* Hacer el div flotante */
+  bottom: 0; /* Pegado a la parte inferior */
+  left: 400px; /* Pegado a la izquierda */
+  right: 0; /* Ancho completo */
+  height: 100px; /* Ajusta la altura según lo necesites */
+  z-index: 3; /* Mayor que el canvas */
+  display: flex; /* Para alinear el contenido si es necesario */
+  align-items: center; /* Centrar verticalmente el contenido */
+  justify-content: center;
+  padding: 10px; /* Espaciado interno */
 }
 
 .purple{
   background-color: #A83FF1;
 }
 
+.purple:hover{
+  background-color: #BA6AF1;
+}
+
 .yellow{
   background-color: #FFA125;
 }
 
+.yellow:hover{
+  background-color: #FFBC63;
+}
+
 .red{
   background-color: #FE4B47;
+}
+
+.red:hover{
+  background-color: #FF6B68;
 }
 
 .ui-row{
@@ -74,8 +94,14 @@ html, body{
   align-items: center;
 }
 
-.ui-button img{
-
+.ui-chord-button{
+  width: 100px;
+  height: 100px;
+  border-style: none;
+  border-radius: 25px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .ui-vertical-separator{
@@ -139,6 +165,16 @@ html, body{
   margin-top: -100px;
 }
 
+#bass-note-control{
+  height: 100px;
+  width: 50px;
+  background-color: C8C8C8;
+  border-radius: 25px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 /* Cambiar el color al hacer clic (activo) */
 
 .seq-button{
@@ -146,7 +182,7 @@ html, body{
 }
 
 .seq-button:hover{
-  background-color: #01DEBB;
+  background-color: #E1E1E1;
 }
 
 .seq-button.active {

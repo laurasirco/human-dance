@@ -59,15 +59,22 @@ bass.oscillator.type = "triangle";
 bass.connect(reverb);
 bass.toDestination();
 
+let bassNotes = ['C2', 'D2', 'E2', 'F2', 'G2', 'A2', 'B2'];
+let bassNoteIndex = 0;
+
 var chords = new Tone.PolySynth({
 }).toDestination();
-chords.connect(reverb);
+// chords.connect(reverb);
 
 chords.set({
 	"envelope" : {
-		"attack" : 0.0
+		"attack"  : 0.005 ,
+    "decay"  : 0.1 ,
+    "sustain"  : 0.3 ,
+    "release"  : 1
 	}
 });
+
 
 let chordsNotes = [
   ['A3', 'C3', 'E4', 'B4'],
@@ -93,25 +100,22 @@ $rows.forEach(($row, i) => {
   });
 });
 
-// const $chords = document.body.querySelector('.chords-buttons');
-// console.log($chords);
-
-// const chordsButtons = $chords.querySelectorAll('.chords-button');
-// chordsButtons.forEach((button, i) => {
-//   button.addEventListener('mousedown', async () => {
-//     const isToneStarted = await ensureToneStarted();
+const chordsButtons = document.body.querySelectorAll('.ui-chord-button');
+chordsButtons.forEach((button, i) => {
+  button.addEventListener('mousedown', async () => {
+    const isToneStarted = await ensureToneStarted();
     
-//     if (isToneStarted) {
-//       // Si Tone está corriendo, entonces reproducir el acorde
-//       const currentBeat = Tone.Transport.position;
-//       const nextBeat = Tone.Transport.nextSubdivision('8n');
-//       chords.triggerAttackRelease(chordsNotes[i], '2n', nextBeat);
-//       console.log(`Acorde ${i} programado para sonar en el próximo beat: ${nextBeat}`);
-//     } else {
-//       console.log("Tone.js aún no ha iniciado.");
-//     }
-//   });
-// });
+    if (isToneStarted) {
+      // Si Tone está corriendo, entonces reproducir el acorde
+      const currentBeat = Tone.Transport.position;
+      const nextBeat = Tone.Transport.nextSubdivision('8n');
+      chords.triggerAttackRelease(chordsNotes[i], '2n', nextBeat);
+      console.log(`Acorde ${i} programado para sonar en el próximo beat: ${nextBeat}`);
+    } else {
+      console.log("Tone.js aún no ha iniciado.");
+    }
+  });
+});
 
 //URL FROM
 
@@ -254,7 +258,7 @@ const loop = new Tone.Loop((time) => {
       }
       else{
         if(i == 6){
-          bass.triggerAttackRelease("D2", '16n', time);
+          bass.triggerAttackRelease(bassNotes[bassNoteIndex], '16n', time);
         }
       }
 
@@ -399,9 +403,13 @@ const loop = new Tone.Loop((time) => {
   }
   index++;
 
-}, "16n");
+}, "8n");
 
 // Iniciar el loop
+
+let bpmValue = document.getElementById('bpm-value');
+console.log(bpmValue);
+
 Tone.Transport.bpm.value = 120;
 Tone.Transport.start();
 loop.start(0);  // Empieza en el tiempo 0
@@ -417,7 +425,7 @@ document.getElementById('play').addEventListener('mousedown', async () => {
   await Tone.start();
 
   loop.start();
-
+  bpmValue.textContent = Math.round(Tone.Transport.bpm.value);
 });
 
 document.getElementById('reset').addEventListener('mousedown', () =>{
@@ -447,6 +455,83 @@ document.getElementById('reset').addEventListener('mousedown', () =>{
   });
 });
 
+document.getElementById('bpm-minus').addEventListener('mousedown', () => {
+  Tone.Transport.bpm.value -= 5;
+  if(Tone.Transport.bpm.value <= 60)
+    Tone.Transport.bpm.value = 60;
+  bpmValue.textContent = Math.round(Tone.Transport.bpm.value);
+  
+});
+
+document.getElementById('bpm-plus').addEventListener('mousedown', () => {
+  Tone.Transport.bpm.value += 5;
+  if(Tone.Transport.bpm.value >= 200)
+    Tone.Transport.bpm.value = 200;
+  bpmValue.textContent = Math.round(Tone.Transport.bpm.value);
+});
+
+document.getElementById('bassdrum-sound').addEventListener('mousedown', async () => {
+  const isToneStarted = await ensureToneStarted();
+    
+      if (isToneStarted) {
+        tr808.player(notes[0]).start();
+      }
+  // toggleNoteOnNextStep(0);
+
+});
+
+document.getElementById('snare-sound').addEventListener('mousedown', async () => {
+  const isToneStarted = await ensureToneStarted();
+    
+  if (isToneStarted) {
+    tr808.player(notes[1]).start();
+  }
+});
+
+document.getElementById('tom-sound').addEventListener('mousedown', async () => {
+  const isToneStarted = await ensureToneStarted();
+    
+  if (isToneStarted) {
+    tr808.player(notes[2]).start();
+  }
+});
+
+document.getElementById('clap-sound').addEventListener('mousedown', async () => {
+  const isToneStarted = await ensureToneStarted();
+    
+  if (isToneStarted) {
+    tr808.player(notes[3]).start();
+  }
+});
+
+document.getElementById('chihat-sound').addEventListener('mousedown', async () => {
+  const isToneStarted = await ensureToneStarted();
+    
+  if (isToneStarted) {
+    tr808.player(notes[4]).start();
+  }
+});
+
+document.getElementById('ohihat-sound').addEventListener('mousedown', async () => {
+  const isToneStarted = await ensureToneStarted();
+    
+  if (isToneStarted) {
+    tr808.player(notes[5]).start();
+  }
+});
+
+document.getElementById('bass-up').addEventListener('mousedown', () => {
+  bassNoteIndex++;
+  if(bassNoteIndex > bassNotes.length)
+    bassNoteIndex = 0;
+});
+
+document.getElementById('bass-down').addEventListener('mousedown', () => {
+  bassNoteIndex--;
+  if(bassNoteIndex < 0)
+    bassNoteIndex = bassNotes.length - 1;
+});
+
 // document.getElementById('metronome-button').addEventListener('mousedown', () => {
 //   metronomeEnabled = !metronomeEnabled;
 // });
@@ -462,26 +547,27 @@ document.getElementById('reset').addEventListener('mousedown', () =>{
 
 //THREE JS PART
 
+const canvas = document.getElementById("threejs-container");
+
 const loader = new GLTFLoader();
 const scene = new THREE.Scene();
-const container = document.getElementById("threejs-container");
-const containerWidth = container.offsetWidth;
-const containerHeight = container.offsetHeight;
+const containerWidth = canvas.offsetWidth;
+const containerHeight = canvas.offsetHeight;
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
 renderer.setSize(containerWidth, containerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // renderer.setClearColor(0x000000, 0); 
 
-container.appendChild(renderer.domElement);
+// container.appendChild(renderer.domElement);
 
-const camera = new THREE.PerspectiveCamera(50, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(40, canvas.offsetWidth / canvas.offsetHeight, 0.1, 1000);
 
 // Handle window resizing
 window.addEventListener('resize', () => {
-  const newWidth = container.offsetWidth;
-  const newHeight = container.offsetHeight;
+  const newWidth = window.innerWidth - 400; // Restamos el ancho fijo de #ui
+  const newHeight = window.innerHeight;
   renderer.setSize(newWidth, newHeight);
   camera.aspect = newWidth / newHeight;
   camera.updateProjectionMatrix();
@@ -498,9 +584,10 @@ directionalLight.castShadow = true;
 // Configurar las propiedades de la sombra, como la distancia y la resolución
 directionalLight.shadow.mapSize.width = 1024;  // Resolución horizontal
 directionalLight.shadow.mapSize.height = 1024; // Resolución vertical
-directionalLight.shadow.camera.near = 0.1;    // Distancia mínima de la sombra
+directionalLight.shadow.camera.near = 0.5;    // Distancia mínima de la sombra
 directionalLight.shadow.camera.far = 50;     // Distancia máxima de la sombra
-
+directionalLight.shadow.camera.left = -10;
+directionalLight.shadow.camera.right = 10;
 
 // Crear un plano para que sea el shadow catcher
 const planeGeometry = new THREE.PlaneGeometry(10, 10);
@@ -513,14 +600,29 @@ plane.rotation.x = -Math.PI / 2;
 plane.receiveShadow = true;
 
 // Añadir el plano a la escena
-scene.add(plane);
+// scene.add(plane);
 
 // const directionalLight2 = new THREE.DirectionalLight('blue', 2);
 // directionalLight2.position.set(-5, -10, 7.5);
 // scene.add(directionalLight2);
 
+loader.load('models/scene_v01.glb', function(gltf){
+  scene.add(gltf.scene);
+  gltf.scene.receiveShadow = true;
+
+  gltf.scene.traverse(function (object) {
+
+    if (object.isMesh) {
+      object.castShadow = true;
+      object.receiveShadow = true;
+    }
+  });
+});
+
 loader.load('models/human_model_v01.glb', function (gltf) {
   scene.add(gltf.scene);
+
+  console.log(gltf.scene)
 
   character = gltf.scene;
   character.castShadow = true;
@@ -738,6 +840,7 @@ loader.load('models/human_model_v01.glb', function (gltf) {
 
       mixer.update(delta);  // Actualiza las animaciones
       renderer.render(scene, camera);
+      
     }
 
     requestAnimationFrame(animate);
@@ -746,7 +849,7 @@ loader.load('models/human_model_v01.glb', function (gltf) {
   animate();
 });
 
-camera.position.z = 5;
+camera.position.z = 10;
 camera.position.y = 2;
 
 
@@ -836,4 +939,25 @@ async function ensureToneStarted() {
     console.log('Tone.js ha sido iniciado');
   }
   return Tone.context.state === 'running';  // Verificar si Tone está corriendo
+}
+
+async function toggleNoteOnNextStep(row){
+
+  const isToneStarted = await ensureToneStarted();
+    
+      if (isToneStarted) {
+        // Si Tone está corriendo, entonces reproducir el acorde
+        const currentBeat = Tone.Transport.position;
+        let step = index % 16;
+        
+        const $rows = document.body.querySelectorAll('.seq-row');
+        
+        console.log(index);
+
+        buttonStates[row][step] = !buttonStates[row][step];
+        const buttons = $rows[row].querySelectorAll('.seq-button');
+
+        let button = buttons[index];
+        button.classList.toggle('active');
+      }
 }
