@@ -198,9 +198,10 @@ body{
 .yellow:hover{
   background-color: #FFBC63;
 }
-.yellow.active{
+
+/* .yellow.active{
   background-color: red;
-}
+} */
 
 .red{
   background-color: #FE4B47;
