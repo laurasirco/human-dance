@@ -75,6 +75,8 @@ chords.set({
 	}
 });
 
+chords.volume.value = -30;
+
 
 let chordsNotes = [
   ['A3', 'C3', 'E4', 'B4'],
@@ -108,11 +110,9 @@ chordsButtons.forEach((button, i) => {
     if (isToneStarted) {
       // Si Tone está corriendo, entonces reproducir el acorde
       const currentBeat = Tone.Transport.position;
-      const nextBeat = Tone.Transport.nextSubdivision('8n');
+      const nextBeat = Tone.Transport.nextSubdivision('16n');
       chords.triggerAttackRelease(chordsNotes[i], '2n', nextBeat);
-      console.log(`Acorde ${i} programado para sonar en el próximo beat: ${nextBeat}`);
     } else {
-      console.log("Tone.js aún no ha iniciado.");
     }
   });
 });
@@ -510,6 +510,10 @@ document.getElementById('bass-down').addEventListener('mousedown', () => {
     bassNoteIndex = bassNotes.length - 1;
 });
 
+document.getElementById('bass-sound').addEventListener('mousedown', () =>{
+  toggleNoteOnNextStep(6);
+});
+
 // document.getElementById('metronome-button').addEventListener('mousedown', () => {
 //   metronomeEnabled = !metronomeEnabled;
 // });
@@ -522,6 +526,31 @@ document.getElementById('bass-down').addEventListener('mousedown', () => {
 //   Tone.Transport.bpm.value = bpm; // Cambiar el BPM del transporte global
 //   bpmValue.textContent = bpm; // Mostrar el valor del BPM actual
 // });
+
+var metronomeDiv = document.getElementById("ui-metronome");
+var volumeSlider = document.getElementById("ui-volume-slider");
+
+metronomeDiv.addEventListener('mousemove', function(e){
+  if(e.buttons == 1){
+    const rect = metronomeDiv.getBoundingClientRect();
+    const yOffset = rect.bottom - e.clientY;
+
+    // Restringir el tamaño del div interno entre 50px y 150px
+    let newHeight = Math.min(150, Math.max(50, yOffset));
+    volumeSlider.style.height = newHeight + 'px';
+
+    let volume = -40 + ((newHeight - 50) / 100) * 40;
+
+    if(newHeight == 50){
+      metronomeEnabled = false;
+    }
+    else{
+      metronomeEnabled = true;
+    }
+
+    metronome.volume.value = volume;
+  }
+})
 
 //THREE JS PART
 
@@ -544,7 +573,7 @@ const camera = new THREE.PerspectiveCamera(40, canvas.offsetWidth / canvas.offse
 
 // Handle window resizing
 window.addEventListener('resize', () => {
-  const newWidth = window.innerWidth - 600; // Restamos el ancho fijo de #ui
+  const newWidth = window.innerWidth - 400; // Restamos el ancho fijo de #ui
   const newHeight = window.innerHeight;
   renderer.setSize(newWidth, newHeight);
   camera.aspect = newWidth / newHeight;
@@ -935,5 +964,15 @@ async function toggleNoteOnNextStep(row) {
 
     let button = buttons[s];
     button.classList.toggle('active');
+
+    if(row <= 5){
+      let note = notes[row];
+      tr808.player(note).start();
+    }
+    else{
+      if(row == 6){
+        bass.triggerAttackRelease(bassNotes[bassNoteIndex], '16n');
+      }
+    }
   }
 }

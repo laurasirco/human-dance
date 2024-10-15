@@ -10,8 +10,15 @@ body{
   display: flex;
 }
 
+* {
+  user-select: none;
+  -webkit-user-select: none;  /* Para Safari */
+  -moz-user-select: none;     /* Para Firefox */
+  -ms-user-select: none;      /* Para IE */
+}
+
 #ui {
-  width: 600px; /* Ancho fijo de la columna */
+  width: 400px; /* Ancho fijo de la columna */
   height: 100vh;
   background-color: #EAEAEA; /* Fondo semitransparente */
   z-index: 2; /* Z-index mayor que el canvas */
@@ -43,30 +50,6 @@ body{
   align-items: center; /* Centrar verticalmente el contenido */
   justify-content: center;
   padding: 10px; /* Espaciado interno */
-}
-
-.purple{
-  background-color: #A83FF1;
-}
-
-.purple:hover{
-  background-color: #BA6AF1;
-}
-
-.yellow{
-  background-color: #FFA125;
-}
-
-.yellow:hover{
-  background-color: #FFBC63;
-}
-
-.red{
-  background-color: #FE4B47;
-}
-
-.red:hover{
-  background-color: #FF6B68;
 }
 
 .ui-row{
@@ -157,33 +140,40 @@ body{
   margin: 16px;
 }
 
-#ui-volume-control{
+#ui-metronome{
   height: 150px;
   width: 50px;
   background-color: #A83FF1;
   border-radius: 25px;
   margin-top: -100px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+
+#ui-volume-slider{
+  width: 50px;
+  height: 50px;
+  border-radius: 25px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+#ui-volume-slider img{
+  margin: 15px;
 }
 
 #bass-note-control{
   height: 100px;
   width: 50px;
-  background-color: C8C8C8;
+  /* background-color: #C8C8C8; */
   border-radius: 25px;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* Cambiar el color al hacer clic (activo) */
-
-.seq-button{
-  background-color: #C8C8C8;
-}
-
-.seq-button:hover{
-  background-color: #E1E1E1;
-}
 
 .seq-button.active {
   background-color: #01DEBB; /* Cambiar a color verde cuando esté pulsado */
@@ -191,4 +181,36 @@ body{
 
 .seq-button.current {
   background-color: white; /* Cambiar a color verde cuando esté pulsado */
+}
+
+.purple{
+  background-color: #A83FF1;
+}
+
+.purple:hover{
+  background-color: #BA6AF1;
+}
+
+.yellow{
+  background-color: #FFA125;
+}
+
+.yellow:hover{
+  background-color: #FFBC63;
+}
+
+.red{
+  background-color: #FE4B47;
+}
+
+.red:hover{
+  background-color: #FF6B68;
+}
+
+.gray{
+  background-color: #C8C8C8;
+}
+
+.gray:hover{
+  background-color: #E1E1E1;
 }
