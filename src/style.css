@@ -11,7 +11,7 @@ body{
 }
 
 #ui {
-  width: 400px; /* Ancho fijo de la columna */
+  width: 600px; /* Ancho fijo de la columna */
   height: 100vh;
   background-color: #EAEAEA; /* Fondo semitransparente */
   z-index: 2; /* Z-index mayor que el canvas */
@@ -35,7 +35,7 @@ body{
 #chords {
   position: absolute; /* Hacer el div flotante */
   bottom: 0; /* Pegado a la parte inferior */
-  left: 400px; /* Pegado a la izquierda */
+  left: 600px; /* Pegado a la izquierda */
   right: 0; /* Ancho completo */
   height: 100px; /* Ajusta la altura según lo necesites */
   z-index: 3; /* Mayor que el canvas */

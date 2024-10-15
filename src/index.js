@@ -408,7 +408,6 @@ const loop = new Tone.Loop((time) => {
 // Iniciar el loop
 
 let bpmValue = document.getElementById('bpm-value');
-console.log(bpmValue);
 
 Tone.Transport.bpm.value = 120;
 Tone.Transport.start();
@@ -471,53 +470,32 @@ document.getElementById('bpm-plus').addEventListener('mousedown', () => {
 });
 
 document.getElementById('bassdrum-sound').addEventListener('mousedown', async () => {
-  const isToneStarted = await ensureToneStarted();
-    
-      if (isToneStarted) {
-        tr808.player(notes[0]).start();
-      }
-  // toggleNoteOnNextStep(0);
+
+  toggleNoteOnNextStep(0);
 
 });
 
 document.getElementById('snare-sound').addEventListener('mousedown', async () => {
-  const isToneStarted = await ensureToneStarted();
-    
-  if (isToneStarted) {
-    tr808.player(notes[1]).start();
-  }
+  toggleNoteOnNextStep(1);
 });
 
 document.getElementById('tom-sound').addEventListener('mousedown', async () => {
-  const isToneStarted = await ensureToneStarted();
-    
-  if (isToneStarted) {
-    tr808.player(notes[2]).start();
-  }
+  toggleNoteOnNextStep(2);
+
 });
 
 document.getElementById('clap-sound').addEventListener('mousedown', async () => {
-  const isToneStarted = await ensureToneStarted();
-    
-  if (isToneStarted) {
-    tr808.player(notes[3]).start();
-  }
+  toggleNoteOnNextStep(3);
+
 });
 
 document.getElementById('chihat-sound').addEventListener('mousedown', async () => {
-  const isToneStarted = await ensureToneStarted();
-    
-  if (isToneStarted) {
-    tr808.player(notes[4]).start();
-  }
+  toggleNoteOnNextStep(4);
+
 });
 
 document.getElementById('ohihat-sound').addEventListener('mousedown', async () => {
-  const isToneStarted = await ensureToneStarted();
-    
-  if (isToneStarted) {
-    tr808.player(notes[5]).start();
-  }
+  toggleNoteOnNextStep(5);
 });
 
 document.getElementById('bass-up').addEventListener('mousedown', () => {
@@ -566,7 +544,7 @@ const camera = new THREE.PerspectiveCamera(40, canvas.offsetWidth / canvas.offse
 
 // Handle window resizing
 window.addEventListener('resize', () => {
-  const newWidth = window.innerWidth - 400; // Restamos el ancho fijo de #ui
+  const newWidth = window.innerWidth - 600; // Restamos el ancho fijo de #ui
   const newHeight = window.innerHeight;
   renderer.setSize(newWidth, newHeight);
   camera.aspect = newWidth / newHeight;
@@ -621,8 +599,6 @@ loader.load('models/scene_v01.glb', function(gltf){
 
 loader.load('models/human_model_v01.glb', function (gltf) {
   scene.add(gltf.scene);
-
-  console.log(gltf.scene)
 
   character = gltf.scene;
   character.castShadow = true;
@@ -941,23 +917,23 @@ async function ensureToneStarted() {
   return Tone.context.state === 'running';  // Verificar si Tone está corriendo
 }
 
-async function toggleNoteOnNextStep(row){
+async function toggleNoteOnNextStep(row) {
 
   const isToneStarted = await ensureToneStarted();
-    
-      if (isToneStarted) {
-        // Si Tone está corriendo, entonces reproducir el acorde
-        const currentBeat = Tone.Transport.position;
-        let step = index % 16;
-        
-        const $rows = document.body.querySelectorAll('.seq-row');
-        
-        console.log(index);
 
-        buttonStates[row][step] = !buttonStates[row][step];
-        const buttons = $rows[row].querySelectorAll('.seq-button');
+  if (isToneStarted) {
 
-        let button = buttons[index];
-        button.classList.toggle('active');
-      }
+    let s = index % 16;
+
+    s -= 1;
+    if(s < 0) s = 0;
+
+    const $rows = document.body.querySelectorAll('.seq-row');
+
+    buttonStates[row][s] = !buttonStates[row][s];
+    const buttons = $rows[row].querySelectorAll('.seq-button');
+
+    let button = buttons[s];
+    button.classList.toggle('active');
+  }
 }
