@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dancing Man</title>
+  <script type="module" crossorigin src="/human-dance/assets/index-DsXjtS8g.js"></script>
+  <link rel="stylesheet" crossorigin href="/human-dance/assets/index-DD1-S_WL.css">
+</head>
+
+<body>
+
+  <div id="ui">
+
+    <div class="ui-row">
+      <div id="bpm-field">
+        <h2 id="bpm-value">120</h2>
+      </div>
+      <div id="title-field">
+        <p>untitled.dance</p>
+      </div>
+    </div>
+
+    <div class="ui-row">
+      <button class="ui-button purple" id="bpm-minus"><img src="img/icons/i-minus.svg"></button>
+      <button class="ui-button purple" id="bpm-plus"><img src="img/icons/i-plus.svg"></button>
+      <button class="ui-button yellow" id="play"><img src="img/icons/i-play.svg"></button>
+      <button class="ui-button yellow" id="stop"><img src="img/icons/i-stop.svg"></button>
+      <button class="ui-button red" id="reset"><img src="img/icons/i-reset.svg"></button>
+      <button class="ui-button purple" id="share"><img src="img/icons/i-share.svg"></button>
+
+      <div class="ui-row">
+        <div class="ui-horizontal-separator"></div>
+        <div id="ui-metronome">
+          <div id="ui-volume-slider" class="yellow"><img src="img/icons/i-metronome.svg"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ui-spacer"></div>
+
+    <div class="ui-row">
+      <button class="ui-chord-button red"></button>
+      <button class="ui-chord-button red"></button>
+      <button class="ui-chord-button red"></button>
+      <div class="ui-column ui-horizontal-separator"></div>
+      <button class="ui-seq-sound-button yellow" id="bass-sound"><img src="img/icons/i-single.svg"></button>
+    </div>
+
+    <div class="ui-row">
+      <button class="ui-seq-sound-button yellow" id="bassdrum-sound"><img class="icon" src="img/icons/i-bassdrum.svg"></button>
+      <button class="ui-seq-sound-button yellow" id="snare-sound"><img src="img/icons/i-snare.svg"></button>
+      <button class="ui-seq-sound-button yellow" id="tom-sound"><img src="img/icons/i-tom.svg"></button>
+      <button class="ui-seq-sound-button yellow" id="clap-sound"><img src="img/icons/i-clap.svg"></button>
+      <button class="ui-seq-sound-button yellow" id="chihat-sound"><img src="img/icons/i-closedhihat.svg"></button>
+      <button class="ui-seq-sound-button yellow" id="ohihat-sound"><img src="img/icons/i-openhihat.svg"></button>
+
+      <div class="ui-column ui-horizontal-separator"></div>
+
+      <div class="ui-column gray" id="bass-note-control">
+              <button class="ui-button yellow" id="bass-up"><img src="img/icons/i-up.svg"></button>
+              <button class="ui-button yellow" id="bass-down"><img src="img/icons/i-down.svg"></button>
+      </div>
+    </div>
+
+    <div class="ui-row">
+      <div class="ui-column  seq-row">
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+      </div>
+      <div class="ui-column  seq-row"> 
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+      </div>
+      <div class="ui-column  seq-row"> 
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+      </div>
+      <div class="ui-column  seq-row"> 
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+      </div>
+      <div class="ui-column  seq-row"> 
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+      </div>
+      <div class="ui-column  seq-row"> 
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+      </div>
+      <div class="ui-column ui-horizontal-separator">
+      </div>
+      <div class="ui-column  seq-row"> 
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <div class="ui-vertical-separator"></div>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+        <button class="ui-button seq-button gray"></button>
+      </div>
+    </div>
+
+  </div>
+  <canvas id="threejs-container"></canvas>
+  <!-- <div id="bg-canvas">
+  </div> -->
+</body>
+
+</html>

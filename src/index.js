@@ -3,6 +3,9 @@ import * as THREE from 'three';
 import * as Tone from 'tone';
 import { gsap } from 'gsap';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPixelatedPass } from 'three/addons/postprocessing/RenderPixelatedPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 let character;
 let mixer;
@@ -604,9 +607,18 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // renderer.setClearColor(0x000000, 0); 
 
-// container.appendChild(renderer.domElement);
-
 const camera = new THREE.PerspectiveCamera(40, canvas.offsetWidth / canvas.offsetHeight, 0.1, 1000);
+
+const composer = new EffectComposer( renderer );
+const renderPixelatedPass = new RenderPixelatedPass( 3, scene, camera );
+renderPixelatedPass.normalEdgeStrength = 0.05;
+renderPixelatedPass.depthEdgeStrength = 0.5;
+composer.addPass( renderPixelatedPass );
+
+const outputPass = new OutputPass();
+composer.addPass( outputPass );
+
+// container.appendChild(renderer.domElement);
 
 // Handle window resizing
 window.addEventListener('resize', () => {
@@ -881,7 +893,7 @@ loader.load('models/human_model_v01.glb', function (gltf) {
       character.rotation.y += Math.sin(delta / 2);
 
       mixer.update(delta);  // Actualiza las animaciones
-      renderer.render(scene, camera);
+      composer.render(scene, camera);
       
     }
 
