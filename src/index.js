@@ -59,7 +59,7 @@ bass.oscillator.type = "triangle";
 bass.connect(reverb);
 bass.toDestination();
 
-let bassNotes = ['C2', 'D2', 'E2', 'F2', 'G2', 'A2', 'B2'];
+let bassNotes = ['A2', 'C2', 'E2', 'B2'];
 let bassNoteIndex = 0;
 
 var chords = new Tone.PolySynth({
@@ -86,6 +86,18 @@ let chordsNotes = [
 
 // BUTTONS
 
+let mouseDown = false;
+
+// Escuchar cuando el botón del ratón está presionado
+document.addEventListener('mousedown', () => {
+  mouseDown = true;
+});
+
+// Escuchar cuando se suelta el botón del ratón
+document.addEventListener('mouseup', () => {
+  mouseDown = false;
+});
+
 const $rows = document.body.querySelectorAll('.seq-row');
 
 let buttonStates = Array.from({ length: $rows.length }, () => Array(16).fill(false));
@@ -103,17 +115,37 @@ $rows.forEach(($row, i) => {
 });
 
 const chordsButtons = document.body.querySelectorAll('.ui-chord-button');
+
 chordsButtons.forEach((button, i) => {
   button.addEventListener('mousedown', async () => {
     const isToneStarted = await ensureToneStarted();
     
     if (isToneStarted) {
-      // Si Tone está corriendo, entonces reproducir el acorde
-      const currentBeat = Tone.Transport.position;
-      const nextBeat = Tone.Transport.nextSubdivision('16n');
-      chords.triggerAttackRelease(chordsNotes[i], '2n', nextBeat);
-    } else {
+      chords.triggerAttack(chordsNotes[i]);
     }
+  });
+
+  button.addEventListener('mouseenter', async () => {
+    const isToneStarted = await ensureToneStarted();
+    
+    if (isToneStarted && mouseDown) {
+      chords.triggerAttack(chordsNotes[i]);
+    }
+  });
+
+  button.addEventListener('mouseleave', () => {
+    const isToneStarted = Tone.context.state === 'running';
+    if (isToneStarted) {
+      chords.triggerRelease(chordsNotes[i]);
+    }
+  });
+
+  button.addEventListener('mouseup', async () => {
+    const isToneStarted = await ensureToneStarted();
+    
+    if (isToneStarted) {
+      chords.triggerRelease(chordsNotes[i]);
+    } 
   });
 });
 
@@ -415,16 +447,21 @@ loop.start(0);  // Empieza en el tiempo 0
 
 // BOTONES DEL LOOP
 
-document.getElementById('stop').addEventListener('mousedown', () => {
+let stopButton = document.getElementById('stop');
+let playButton = document.getElementById('play');
+
+stopButton.addEventListener('mousedown', () => {
   loop.stop();
 });
 
 // Escuchar el clic en el botón para iniciar el audio
-document.getElementById('play').addEventListener('mousedown', async () => {
+playButton.addEventListener('mousedown', async () => {
   await Tone.start();
 
   loop.start();
   bpmValue.textContent = Math.round(Tone.Transport.bpm.value);
+
+  playButton.classList.toggle('active');
 });
 
 document.getElementById('reset').addEventListener('mousedown', () =>{
