@@ -6,6 +6,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPixelatedPass } from 'three/addons/postprocessing/RenderPixelatedPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 let character;
 let mixer;
@@ -78,7 +79,7 @@ chords.set({
 	}
 });
 
-chords.volume.value = -30;
+chords.volume.value = -20;
 
 
 let chordsNotes = [
@@ -608,6 +609,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // renderer.setClearColor(0x000000, 0); 
 
 const camera = new THREE.PerspectiveCamera(40, canvas.offsetWidth / canvas.offsetHeight, 0.1, 1000);
+const controls = new OrbitControls( camera, renderer.domElement );
 
 const composer = new EffectComposer( renderer );
 const renderPixelatedPass = new RenderPixelatedPass( 3, scene, camera );
@@ -627,6 +629,8 @@ window.addEventListener('resize', () => {
   renderer.setSize(newWidth, newHeight);
   camera.aspect = newWidth / newHeight;
   camera.updateProjectionMatrix();
+  controls.update();
+
 });
 
 // Añadir luces a la escena
@@ -665,6 +669,25 @@ plane.receiveShadow = true;
 loader.load('models/scene_v01.glb', function(gltf){
   scene.add(gltf.scene);
   gltf.scene.receiveShadow = true;
+
+  gltf.scene.traverse(function (object) {
+
+    if (object.isMesh) {
+      object.castShadow = true;
+      object.receiveShadow = true;
+    }
+  });
+});
+
+loader.load('models/clock_v01.gltf', function(gltf){
+  scene.add(gltf.scene);
+  gltf.scene.receiveShadow = true;
+
+  gltf.scene.position.z -= 5.5;
+  gltf.scene.position.y += 5;
+  gltf.scene.scale.x = 2;
+  gltf.scene.scale.y = 2;
+  gltf.scene.scale.z = 2;
 
   gltf.scene.traverse(function (object) {
 
@@ -893,6 +916,7 @@ loader.load('models/human_model_v01.glb', function (gltf) {
       character.rotation.y += Math.sin(delta / 2);
 
       mixer.update(delta);  // Actualiza las animaciones
+      controls.update();
       composer.render(scene, camera);
       
     }
@@ -905,6 +929,7 @@ loader.load('models/human_model_v01.glb', function (gltf) {
 
 camera.position.z = 10;
 camera.position.y = 2;
+controls.update();
 
 
 // FUNCTIONS
