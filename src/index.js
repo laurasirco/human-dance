@@ -27,6 +27,9 @@ var headNod = false;
 var headNodSide = 0;
 var metronomeEnabled = false;
 
+var cameraZoomed = false;
+var cameraRotatedSide = -1;
+
 // TONE PART
 
 var tr808 = new Tone.Players({
@@ -294,6 +297,7 @@ const loop = new Tone.Loop((time) => {
       }
       else{
         if(i == 6){
+          bassNoteIndex = getRandomInt(0, bassNotes.length-1);
           bass.triggerAttackRelease(bassNotes[bassNoteIndex], '16n', time);
         }
       }
@@ -317,6 +321,28 @@ const loop = new Tone.Loop((time) => {
 
           torsoSide = 0;
         }
+
+        if(cameraZoomed){
+          gsap.to(camera, {
+            fov: 16,
+            duration: 0.1,
+            ease: 'power1.out',
+            onUpdate: function () {
+              camera.updateProjectionMatrix();  // Necesario para que los cambios en FOV surtan efecto
+            }
+          });
+        }
+        else{
+          gsap.to(camera, {
+            fov: 15,
+            duration: 0.1,
+            ease: 'power1.out',
+            onUpdate: function () {
+              camera.updateProjectionMatrix();  // Necesario para que los cambios en FOV surtan efecto
+            }
+          });
+        }
+        cameraZoomed = !cameraZoomed;
       }
 
       if (i == 1) {
@@ -359,6 +385,15 @@ const loop = new Tone.Loop((time) => {
 
         clapAction.stop();
         clapAction.play();
+
+        gsap.to(camera.rotation, {
+          z: Math.PI / 40 * cameraRotatedSide,           // Rotar 45 grados
+          duration: 0.1,            // Duración de la animación
+          ease: "power2.out",       // Ease out
+          repeat: 1,               // Repetir infinitamente
+          yoyo: true,               // Ir y volver
+      });
+      cameraRotatedSide *= -1;
       }
 
       if(i == 4){
@@ -602,17 +637,17 @@ const scene = new THREE.Scene();
 const containerWidth = canvas.offsetWidth;
 const containerHeight = canvas.offsetHeight;
 
-const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false, alpha: false });
 renderer.setSize(containerWidth, containerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // renderer.setClearColor(0x000000, 0); 
 
-const camera = new THREE.PerspectiveCamera(40, canvas.offsetWidth / canvas.offsetHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(15, canvas.offsetWidth / canvas.offsetHeight, 0.1, 1000);
 const controls = new OrbitControls( camera, renderer.domElement );
 
 const composer = new EffectComposer( renderer );
-const renderPixelatedPass = new RenderPixelatedPass( 3, scene, camera );
+const renderPixelatedPass = new RenderPixelatedPass( 4, scene, camera );
 renderPixelatedPass.normalEdgeStrength = 0.05;
 renderPixelatedPass.depthEdgeStrength = 0.5;
 composer.addPass( renderPixelatedPass );
@@ -624,30 +659,40 @@ composer.addPass( outputPass );
 
 // Handle window resizing
 window.addEventListener('resize', () => {
-  const newWidth = window.innerWidth - 400; // Restamos el ancho fijo de #ui
+  const newWidth = window.innerWidth; // Restamos el ancho fijo de #ui
   const newHeight = window.innerHeight;
   renderer.setSize(newWidth, newHeight);
+  composer.setSize(newWidth, newHeight);
   camera.aspect = newWidth / newHeight;
   camera.updateProjectionMatrix();
-  controls.update();
+  // controls.update();
 
 });
 
 // Añadir luces a la escena
-const ambientLight = new THREE.AmbientLight('white', 2);
+const ambientLight = new THREE.AmbientLight('white', 0.5);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight('white', 1);
-directionalLight.position.set(10, 10, 7.5);
+const directionalLight = new THREE.DirectionalLight('white', 4);
+directionalLight.position.set(4, 14, 0);
 scene.add(directionalLight);
 directionalLight.castShadow = true;
 // Configurar las propiedades de la sombra, como la distancia y la resolución
-directionalLight.shadow.mapSize.width = 1024;  // Resolución horizontal
-directionalLight.shadow.mapSize.height = 1024; // Resolución vertical
-directionalLight.shadow.camera.near = 0.5;    // Distancia mínima de la sombra
-directionalLight.shadow.camera.far = 50;     // Distancia máxima de la sombra
-directionalLight.shadow.camera.left = -10;
-directionalLight.shadow.camera.right = 10;
+directionalLight.shadow.mapSize.width = 2048;  // Resolución horizontal
+directionalLight.shadow.mapSize.height = 2048; // Resolución vertical
+directionalLight.shadow.camera.near = 0.1;    // Distancia mínima de la sombra
+directionalLight.shadow.camera.far = 20;     // Distancia máxima de la sombra
+directionalLight.shadow.camera.left = -15;
+directionalLight.shadow.camera.right = 15;
+directionalLight.shadow.camera.top = 15;
+directionalLight.shadow.camera.bottom = -15;
+directionalLight.shadow.bias = -0.004;
+
+// const directionalLightCameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera)
+// scene.add(directionalLightCameraHelper)
+
+// const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 0.2)
+// scene.add(directionalLightHelper)
 
 // Crear un plano para que sea el shadow catcher
 const planeGeometry = new THREE.PlaneGeometry(10, 10);
@@ -662,47 +707,69 @@ plane.receiveShadow = true;
 // Añadir el plano a la escena
 // scene.add(plane);
 
-// const directionalLight2 = new THREE.DirectionalLight('blue', 2);
-// directionalLight2.position.set(-5, -10, 7.5);
-// scene.add(directionalLight2);
+const directionalLight2 = new THREE.DirectionalLight('orange', 3);
+directionalLight2.position.set(-4, 1, -1);
+scene.add(directionalLight2);
 
-loader.load('models/scene_v01.glb', function(gltf){
+// const hemisphereLight = new THREE.HemisphereLight('red', 'white', 0.9)
+// scene.add(hemisphereLight)
+
+loader.load('models/scene_v01.gltf', function(gltf){
   scene.add(gltf.scene);
-  gltf.scene.receiveShadow = true;
 
   gltf.scene.traverse(function (object) {
+
+    let gltfCamera = null;
 
     if (object.isMesh) {
       object.castShadow = true;
       object.receiveShadow = true;
+
+
+      if(object.name.includes('techo')){
+        object.castShadow = false;
+        object.receiveShadow = false;
+      }
+      if(object.material.name == 'cristal'){
+        const translucentMaterial = new THREE.MeshStandardMaterial({
+          color: 0x99ccff,            // Un color ligeramente azulado
+          transparent: true,          // Habilitar la transparencia
+          opacity: 0.2,               // Controlar el nivel de transparencia
+          roughness: 0.5,             // Rugosidad media para una superficie difusa
+          metalness: 0,               // Sin efecto metálico
+      });
+        object.material = translucentMaterial;
+        console.log(object.material.name);
+      }
+      else{
+      //   object.material = new THREE.MeshNormalMaterial({
+      //     color: object.material.color,  // Mantener el color original
+      // });
+      }
     }
+
+    if(object.isCamera){
+      gltfCamera = object;
+
+      // Si se encuentra una cámara, úsala como la cámara activa
+      // camera.copy(gltfCamera);  // Copiamos sus propiedades a la cámara principal
+      camera.position.copy(gltfCamera.position);  // Aseguramos que la posición esté alineada
+      camera.quaternion.copy(gltfCamera.quaternion);  // Alineamos la rotación
+      // camera.aspect = window.innerWidth / window.innerHeight;
+      // camera.updateProjectionMatrix();
+    }
+
   });
 });
 
-loader.load('models/clock_v01.gltf', function(gltf){
-  scene.add(gltf.scene);
-  gltf.scene.receiveShadow = true;
-
-  gltf.scene.position.z -= 5.5;
-  gltf.scene.position.y += 5;
-  gltf.scene.scale.x = 2;
-  gltf.scene.scale.y = 2;
-  gltf.scene.scale.z = 2;
-
-  gltf.scene.traverse(function (object) {
-
-    if (object.isMesh) {
-      object.castShadow = true;
-      object.receiveShadow = true;
-    }
-  });
-});
 
 loader.load('models/human_model_v01.glb', function (gltf) {
   scene.add(gltf.scene);
 
   character = gltf.scene;
   character.castShadow = true;
+
+  character.position.x -= 0.3;
 
   const skinnedMesh = character.getObjectByProperty('type', 'SkinnedMesh');
   const ske = skinnedMesh.skeleton;
@@ -720,7 +787,7 @@ loader.load('models/human_model_v01.glb', function (gltf) {
 
     if (object.name == 'jacket') {
       char.jacket = object;
-      char.jacket.visible = false;
+      // char.jacket.visible = false;
     }
 
     if (object.name == "mixamorigHips") {
@@ -899,7 +966,7 @@ loader.load('models/human_model_v01.glb', function (gltf) {
   let startTime = Date.now();
   const clock = new THREE.Clock();
 
-  const targetFPS = 120;
+  const targetFPS = 24;
   const frameDuration = 1000 / targetFPS;  // Duración de un frame en milisegundos
 
   let lastFrameTime = 0;
@@ -916,8 +983,10 @@ loader.load('models/human_model_v01.glb', function (gltf) {
       character.rotation.y += Math.sin(delta / 2);
 
       mixer.update(delta);  // Actualiza las animaciones
-      controls.update();
-      composer.render(scene, camera);
+
+      
+      // controls.update();
+      renderer.render(scene, camera);
       
     }
 
@@ -927,9 +996,7 @@ loader.load('models/human_model_v01.glb', function (gltf) {
   animate();
 });
 
-camera.position.z = 10;
-camera.position.y = 2;
-controls.update();
+// controls.update();
 
 
 // FUNCTIONS
