@@ -14,7 +14,7 @@ let mixer;
 let char = {};
 
 var hipsUpAction, hipsDownAction;
-var leftKickAction, rightKickAction;
+var leftKickAction, rightKickAction, leftBackKickAction, rightBackKickAction;
 var armsAction, robotArmsRightAction, robotArmsLeftAction;
 var torsoLeftAction, torsoRightAction;
 var headNodInAction, headNodOutAction, headNodLeftAction, headNodRightAction;
@@ -27,7 +27,7 @@ var headNod = false;
 var headNodSide = 0;
 var metronomeEnabled = false;
 
-var cameraZoomed = false;
+var cameraZoomed = true;
 var cameraRotatedSide = -1;
 
 // TONE PART
@@ -387,7 +387,7 @@ const loop = new Tone.Loop((time) => {
         clapAction.play();
 
         gsap.to(camera.rotation, {
-          z: Math.PI / 40 * cameraRotatedSide,           // Rotar 45 grados
+          z: Math.PI / 80 * cameraRotatedSide,           // Rotar 45 grados
           duration: 0.1,            // Duración de la animación
           ease: "power2.out",       // Ease out
           repeat: 1,               // Repetir infinitamente
@@ -450,10 +450,17 @@ const loop = new Tone.Loop((time) => {
           // hipsUpAction.stop();
           // hipsDownAction.stop();
 
-          leftKickAction.play();
-
           rightKickAction.stop();
           rightKickAction.reset();
+          rightBackKickAction.stop();
+          rightBackKickAction.reset();
+
+          if(bassNoteIndex % 2 == 0){
+            leftKickAction.play();
+          }
+          else{
+            leftBackKickAction.play();
+          }
 
           kickSide = 1;
         }
@@ -462,10 +469,17 @@ const loop = new Tone.Loop((time) => {
           // hipsUpAction.stop();
           // hipsDownAction.stop();
 
-          rightKickAction.play();
+          if(bassNoteIndex % 2 == 0){
+            rightBackKickAction.play();
+          }
+          else {
+            rightKickAction.play();
+          }
 
           leftKickAction.stop();
           leftKickAction.reset();
+          leftBackKickAction.stop();
+          leftBackKickAction.reset();
 
           kickSide = 0;
         }
@@ -670,11 +684,11 @@ window.addEventListener('resize', () => {
 });
 
 // Añadir luces a la escena
-const ambientLight = new THREE.AmbientLight('white', 0.5);
+const ambientLight = new THREE.AmbientLight('azure', 1.0);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight('white', 4);
-directionalLight.position.set(4, 14, 0);
+const directionalLight = new THREE.DirectionalLight('azure', 2);
+directionalLight.position.set(0, 14, 0);
 scene.add(directionalLight);
 directionalLight.castShadow = true;
 // Configurar las propiedades de la sombra, como la distancia y la resolución
@@ -707,9 +721,24 @@ plane.receiveShadow = true;
 // Añadir el plano a la escena
 // scene.add(plane);
 
-const directionalLight2 = new THREE.DirectionalLight('orange', 3);
-directionalLight2.position.set(-4, 1, -1);
+const directionalLight2 = new THREE.DirectionalLight('darkorange', 5);
+directionalLight2.position.set(-4, 2, 0);
 scene.add(directionalLight2);
+directionalLight2.castShadow = true;
+// Configurar las propiedades de la sombra, como la distancia y la resolución
+directionalLight2.shadow.mapSize.width = 2048;  // Resolución horizontal
+directionalLight2.shadow.mapSize.height = 2048; // Resolución vertical
+directionalLight2.shadow.camera.near = 0.1;    // Distancia mínima de la sombra
+directionalLight2.shadow.camera.far = 20;     // Distancia máxima de la sombra
+directionalLight2.shadow.camera.left = -15;
+directionalLight2.shadow.camera.right = 15;
+directionalLight2.shadow.camera.top = 15;
+directionalLight2.shadow.camera.bottom = -15;
+directionalLight2.shadow.bias = -0.004;
+
+const directionalLight3 = new THREE.DirectionalLight('midnightblue', 3);
+directionalLight3.position.set(4, 2, -1);
+scene.add(directionalLight3);
 
 // const hemisphereLight = new THREE.HemisphereLight('red', 'white', 0.9)
 // scene.add(hemisphereLight)
@@ -742,9 +771,10 @@ loader.load('models/scene_v01.gltf', function(gltf){
         console.log(object.material.name);
       }
       else{
-      //   object.material = new THREE.MeshNormalMaterial({
-      //     color: object.material.color,  // Mantener el color original
-      // });
+        // object.material = new THREE.MeshLambertMaterial({
+        //   color: object.material.color,  // Mantener el color original
+        // });
+        
       }
     }
 
@@ -769,7 +799,7 @@ loader.load('models/human_model_v01.glb', function (gltf) {
   character = gltf.scene;
   character.castShadow = true;
 
-  character.position.x -= 0.3;
+  character.position.x += 1;
 
   const skinnedMesh = character.getObjectByProperty('type', 'SkinnedMesh');
   const ske = skinnedMesh.skeleton;
@@ -783,6 +813,10 @@ loader.load('models/human_model_v01.glb', function (gltf) {
     if (object.isMesh) {
       object.castShadow = true;
       object.receiveShadow = true;
+
+      // object.material = new THREE.MeshLambertMaterial({
+      //   color: object.material.color,  // Mantener el color original
+      // });
     }
 
     if (object.name == 'jacket') {
@@ -882,6 +916,8 @@ loader.load('models/human_model_v01.glb', function (gltf) {
     const robotArmsRight = THREE.AnimationClip.findByName(animations, 'RobotArmsRight');
     const leftKick = THREE.AnimationClip.findByName(animations, 'KickLeft');
     const rightKick = THREE.AnimationClip.findByName(animations, 'KickRight');
+    const leftBKick = THREE.AnimationClip.findByName(animations, 'BackKickLeft');
+    const rightBKick = THREE.AnimationClip.findByName(animations, 'BackKickRight');
 
     const fLeftKick = filterTracksForBones(leftKick, ['mixamorigUpLegL', 'mixamorigLegL', 'mixamorigFootL', 'mixamorigUpLegR', 'mixamorigLegR', 'mixamorigFootR']);
     leftKickAction = mixer.clipAction(fLeftKick);
@@ -892,6 +928,16 @@ loader.load('models/human_model_v01.glb', function (gltf) {
     rightKickAction = mixer.clipAction(fRightKick);
     rightKickAction.setLoop(THREE.LoopOnce, 1);
     rightKickAction.clampWhenFinished = true;
+
+    const fLeftBKick = filterTracksForBones(leftBKick, ['mixamorigUpLegL', 'mixamorigLegL', 'mixamorigFootL', 'mixamorigUpLegR', 'mixamorigLegR', 'mixamorigFootR']);
+    leftBackKickAction = mixer.clipAction(fLeftBKick);
+    leftBackKickAction.setLoop(THREE.LoopOnce, 1);
+    leftBackKickAction.clampWhenFinished = true;
+
+    const fRighBtKick = filterTracksForBones(rightBKick, ['mixamorigUpLegL', 'mixamorigLegL', 'mixamorigFootL', 'mixamorigUpLegR', 'mixamorigLegR', 'mixamorigFootR']);
+    rightBackKickAction = mixer.clipAction(fRighBtKick);
+    rightBackKickAction.setLoop(THREE.LoopOnce, 1);
+    rightBackKickAction.clampWhenFinished = true;
 
     const fRobotArmsLeft = filterTracksForBones(robotArmsLeft, ['mixamorigShoulderL', 'mixamorigShoulderR', 'mixamorigArmL', 'mixamorigArmR', 'mixamorigForeArmL', 'mixamorigForeArmR', 'mixamorigHandL', 'mixamorigHandR']);
     robotArmsLeftAction = mixer.clipAction(fRobotArmsLeft);
@@ -966,7 +1012,7 @@ loader.load('models/human_model_v01.glb', function (gltf) {
   let startTime = Date.now();
   const clock = new THREE.Clock();
 
-  const targetFPS = 24;
+  const targetFPS = 15;
   const frameDuration = 1000 / targetFPS;  // Duración de un frame en milisegundos
 
   let lastFrameTime = 0;
@@ -986,7 +1032,7 @@ loader.load('models/human_model_v01.glb', function (gltf) {
 
       
       // controls.update();
-      renderer.render(scene, camera);
+      composer.render(scene, camera);
       
     }
 

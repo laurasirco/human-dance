@@ -23,7 +23,7 @@ body{
   top: 0;
   width: 400px; /* Ancho fijo de la columna */
   height: 100vh;
-  background-color: rgba(234, 234, 234, 0.65); /* Fondo semitransparente */
+  background-color: rgba(234, 234, 234, 0.8); /* Fondo semitransparente */
   z-index: 2; /* Z-index mayor que el canvas */
   padding: 16px;
   overflow-y: scroll;
