@@ -7,6 +7,10 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPixelatedPass } from 'three/addons/postprocessing/RenderPixelatedPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { createNoise2D } from 'simplex-noise';
+
+// Crear una instancia de SimplexNoise
+const noise2D = createNoise2D();
 
 let character;
 let mixer;
@@ -658,7 +662,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // renderer.setClearColor(0x000000, 0); 
 
 const camera = new THREE.PerspectiveCamera(15, canvas.offsetWidth / canvas.offsetHeight, 0.1, 1000);
-const controls = new OrbitControls( camera, renderer.domElement );
+// const controls = new OrbitControls( camera, renderer.domElement );
 
 const composer = new EffectComposer( renderer );
 const renderPixelatedPass = new RenderPixelatedPass( 4, scene, camera );
@@ -768,7 +772,6 @@ loader.load('models/scene_v01.gltf', function(gltf){
           metalness: 0,               // Sin efecto metálico
       });
         object.material = translucentMaterial;
-        console.log(object.material.name);
       }
       else{
         // object.material = new THREE.MeshLambertMaterial({
@@ -781,12 +784,10 @@ loader.load('models/scene_v01.gltf', function(gltf){
     if(object.isCamera){
       gltfCamera = object;
 
-      // Si se encuentra una cámara, úsala como la cámara activa
-      // camera.copy(gltfCamera);  // Copiamos sus propiedades a la cámara principal
       camera.position.copy(gltfCamera.position);  // Aseguramos que la posición esté alineada
       camera.quaternion.copy(gltfCamera.quaternion);  // Alineamos la rotación
-      // camera.aspect = window.innerWidth / window.innerHeight;
-      // camera.updateProjectionMatrix();
+
+      camera.position.y += 1;
     }
 
   });
@@ -1017,7 +1018,15 @@ loader.load('models/human_model_v01.glb', function (gltf) {
 
   let lastFrameTime = 0;
 
+  let cameraXRadius = 0.1;
+  let cameraYRadius = 0.01;
+  let cameraSpeed = 0.5;
+
+  let lookAt = new THREE.Vector3(char.hips.position.x, char.hips.position.y, char.hips.position.z);
+  lookAt.y += 0.5;
+
   function animate(time) {
+
     const deltaTime = time - lastFrameTime;
 
     if (deltaTime >= frameDuration) {
@@ -1026,10 +1035,27 @@ loader.load('models/human_model_v01.glb', function (gltf) {
       // Actualizar la escena, animaciones y renderizar
       const delta = clock.getDelta();
 
+      const elapsedTime = clock.getElapsedTime();
+
+      const noiseX = noise2D(elapsedTime*0.5, 0);
+      const noiseY = noise2D(elapsedTime*0.5, 10);
+
+      const angle = elapsedTime * cameraSpeed;
+
+      const x = Math.cos(angle) * cameraXRadius;
+      const y = Math.sin(angle) * cameraYRadius;
+
+      camera.position.x += x;
+      camera.position.y += y;
+
+      camera.position.x += noiseX*0.02;
+      camera.position.y += noiseY*0.02;
+
+      camera.lookAt(lookAt);
+
       character.rotation.y += Math.sin(delta / 2);
 
       mixer.update(delta);  // Actualiza las animaciones
-
       
       // controls.update();
       composer.render(scene, camera);
