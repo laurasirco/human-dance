@@ -86,7 +86,7 @@ chords.set({
 	}
 });
 
-chords.volume.value = -20;
+chords.volume.value = -10;
 
 
 let chordsNotes = [
@@ -109,6 +109,21 @@ document.addEventListener('mouseup', () => {
   mouseDown = false;
 });
 
+// Escuchar cuando el botón del ratón está presionado
+document.addEventListener('touchstart', () => {
+  mouseDown = true;
+});
+
+// Escuchar cuando se suelta el botón del ratón
+document.addEventListener('touchend', () => {
+  mouseDown = false;
+});
+
+// Escuchar cuando se suelta el botón del ratón
+document.addEventListener('touchcancel', () => {
+  mouseDown = false;
+});
+
 const $rows = document.body.querySelectorAll('.seq-row');
 
 let buttonStates = Array.from({ length: $rows.length }, () => Array(16).fill(false));
@@ -123,41 +138,59 @@ $rows.forEach(($row, i) => {
       button.classList.toggle('active');
     });
   });
+  buttons.forEach((button, j) => {
+    button.addEventListener('touchdown', () =>{
+      buttonStates[i][j] = !buttonStates[i][j];
+      button.classList.toggle('active');
+    });
+  });
+
 });
 
 const chordsButtons = document.body.querySelectorAll('.ui-chord-button');
 
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
 chordsButtons.forEach((button, i) => {
-  button.addEventListener('mousedown', async () => {
-    const isToneStarted = await ensureToneStarted();
-    
-    if (isToneStarted) {
-      chords.triggerAttack(chordsNotes[i]);
-    }
-  });
+  if (isTouchDevice) {
+    button.addEventListener('touchstart', async (e) => {
+      e.preventDefault();
+      const isToneStarted = await ensureToneStarted();
+      if (isToneStarted) {
+        chords.triggerAttack(chordsNotes[i]);
+      }
+    });
 
-  button.addEventListener('mouseenter', async () => {
-    const isToneStarted = await ensureToneStarted();
-    
-    if (isToneStarted && mouseDown) {
-      chords.triggerAttack(chordsNotes[i]);
-    }
-  });
+    button.addEventListener('touchend', async (e) => {
+      e.preventDefault();
+      const isToneStarted = await ensureToneStarted();
+      if (isToneStarted) {
+        chords.triggerRelease(chordsNotes[i]);
+      }
+    });
 
-  button.addEventListener('mouseleave', () => {
-    const isToneStarted = Tone.context.state === 'running';
-    if (isToneStarted) {
-      chords.triggerRelease(chordsNotes[i]);
-    }
-  });
+    button.addEventListener('touchcancel', async (e) => {
+      e.preventDefault();
+      const isToneStarted = await ensureToneStarted();
+      if (isToneStarted) {
+        chords.triggerRelease(chordsNotes[i]);
+      }
+    });
+  } else {
+    button.addEventListener('mousedown', async () => {
+      const isToneStarted = await ensureToneStarted();
+      if (isToneStarted) {
+        chords.triggerAttack(chordsNotes[i]);
+      }
+    });
 
-  button.addEventListener('mouseup', async () => {
-    const isToneStarted = await ensureToneStarted();
-    
-    if (isToneStarted) {
-      chords.triggerRelease(chordsNotes[i]);
-    } 
-  });
+    button.addEventListener('mouseup', async () => {
+      const isToneStarted = await ensureToneStarted();
+      if (isToneStarted) {
+        chords.triggerRelease(chordsNotes[i]);
+      }
+    });
+  }
 });
 
 //URL FROM
@@ -608,19 +641,6 @@ document.getElementById('bass-sound').addEventListener('mousedown', () =>{
   toggleNoteOnNextStep(6);
 });
 
-// document.getElementById('metronome-button').addEventListener('mousedown', () => {
-//   metronomeEnabled = !metronomeEnabled;
-// });
-
-// const bpmSlider = document.getElementById('bpm-slider');
-// const bpmValue = document.getElementById('bpm-value');
-
-// bpmSlider.addEventListener('input', (event) => {
-//   const bpm = event.target.value;
-//   Tone.Transport.bpm.value = bpm; // Cambiar el BPM del transporte global
-//   bpmValue.textContent = bpm; // Mostrar el valor del BPM actual
-// });
-
 var metronomeDiv = document.getElementById("ui-metronome");
 var volumeSlider = document.getElementById("ui-volume-slider");
 
@@ -644,7 +664,30 @@ metronomeDiv.addEventListener('mousemove', function(e){
 
     metronome.volume.value = volume;
   }
-})
+});
+
+metronomeDiv.addEventListener('touchmove', function(e){
+  e.preventDefault();  // Evitar el scroll de la pantalla
+
+  if(e.buttons == 1 || e.touches.length > 0){  // Verificar si hay algún toque activo
+    const rect = metronomeDiv.getBoundingClientRect();
+    const yOffset = rect.bottom - e.touches[0].clientY; // Usar el primer toque en lugar de clientY
+    
+    // Restringir el tamaño del div interno entre 50px y 150px
+    let newHeight = Math.min(150, Math.max(50, yOffset));
+    volumeSlider.style.height = newHeight + 'px';
+
+    let volume = -40 + ((newHeight - 50) / 100) * 40;
+
+    if(newHeight == 50){
+      metronomeEnabled = false;
+    } else {
+      metronomeEnabled = true;
+    }
+
+    metronome.volume.value = volume;
+  }
+}, { passive: false });  // Añadir 'passive: false' para permitir preventDefault en touchmove
 
 //THREE JS PART
 
