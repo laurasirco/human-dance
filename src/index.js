@@ -9,7 +9,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createNoise2D } from 'simplex-noise';
 
-// Crear una instancia de SimplexNoise
+
 const noise2D = createNoise2D();
 
 let character;
@@ -33,6 +33,21 @@ var metronomeEnabled = false;
 
 var cameraZoomed = true;
 var cameraRotatedSide = -1;
+let lookAt;
+
+let startTime = Date.now();
+const clock = new THREE.Clock();
+
+const targetFPS = 15;
+const frameDuration = 1000 / targetFPS;  // Duración de un frame en milisegundos
+
+let lastFrameTime = 0;
+
+let cameraXRadius = 0.1;
+let cameraYRadius = 0.01;
+let cameraSpeed = 0.5;
+
+var started = false;
 
 // TONE PART
 
@@ -88,7 +103,6 @@ chords.set({
 
 chords.volume.value = -10;
 
-
 let chordsNotes = [
   ['A3', 'C3', 'E4', 'B4'],
   ['F3', 'A3', 'C4', 'E4'],
@@ -99,27 +113,22 @@ let chordsNotes = [
 
 let mouseDown = false;
 
-// Escuchar cuando el botón del ratón está presionado
 document.addEventListener('mousedown', () => {
   mouseDown = true;
 });
 
-// Escuchar cuando se suelta el botón del ratón
 document.addEventListener('mouseup', () => {
   mouseDown = false;
 });
 
-// Escuchar cuando el botón del ratón está presionado
 document.addEventListener('touchstart', () => {
   mouseDown = true;
 });
 
-// Escuchar cuando se suelta el botón del ratón
 document.addEventListener('touchend', () => {
   mouseDown = false;
 });
 
-// Escuchar cuando se suelta el botón del ratón
 document.addEventListener('touchcancel', () => {
   mouseDown = false;
 });
@@ -193,28 +202,190 @@ chordsButtons.forEach((button, i) => {
   }
 });
 
+
+let stopButton = document.getElementById('stop');
+let playButton = document.getElementById('play');
+let startButton = document.getElementById('start-button');
+
+startButton.addEventListener('mousedown', async () => {
+  await Tone.start();
+  Tone.Transport.start();
+  loop.start();
+  // loop.stop();
+
+  console.log("start");
+
+  startButton.style.visibility = 'hidden';
+  started = true;
+});
+
+stopButton.addEventListener('mousedown', () => {
+  loop.stop();
+});
+
+// Escuchar el clic en el botón para iniciar el audio
+playButton.addEventListener('mousedown', async () => {
+  await Tone.start();
+
+  loop.start();
+  bpmValue.textContent = Math.round(Tone.Transport.bpm.value);
+
+  playButton.classList.toggle('active');
+});
+
+document.getElementById('reset').addEventListener('mousedown', () =>{
+  $rows.forEach(($row, i) => {
+    const buttons = $row.querySelectorAll('.seq-button');
+  
+    buttons.forEach((button, j) => {
+      buttonStates[i][j] = false;
+      button.classList.remove('active');
+    });
+
+    hipsDownAction.stop();
+    hipsUpAction.stop();
+    headNodInAction.stop();
+    headNodOutAction.stop();
+    armsAction.stop();
+    leftKickAction.stop();
+    rightKickAction.stop();
+    headNodLeftAction.stop();
+    headNodRightAction.stop();
+    torsoLeftAction.stop();
+    torsoRightAction.stop();
+    robotArmsLeftAction.stop();
+    robotArmsRightAction.stop();
+    clapAction.stop();
+
+  });
+});
+
+document.getElementById('bpm-minus').addEventListener('mousedown', () => {
+  Tone.Transport.bpm.value -= 5;
+  if(Tone.Transport.bpm.value <= 60)
+    Tone.Transport.bpm.value = 60;
+  bpmValue.textContent = Math.round(Tone.Transport.bpm.value);
+  
+});
+
+document.getElementById('bpm-plus').addEventListener('mousedown', () => {
+  Tone.Transport.bpm.value += 5;
+  if(Tone.Transport.bpm.value >= 200)
+    Tone.Transport.bpm.value = 200;
+  bpmValue.textContent = Math.round(Tone.Transport.bpm.value);
+});
+
+document.getElementById('bassdrum-sound').addEventListener('mousedown', async () => {
+
+  toggleNoteOnNextStep(0);
+
+});
+
+document.getElementById('snare-sound').addEventListener('mousedown', async () => {
+  toggleNoteOnNextStep(1);
+});
+
+document.getElementById('tom-sound').addEventListener('mousedown', async () => {
+  toggleNoteOnNextStep(2);
+
+});
+
+document.getElementById('clap-sound').addEventListener('mousedown', async () => {
+  toggleNoteOnNextStep(3);
+
+});
+
+document.getElementById('chihat-sound').addEventListener('mousedown', async () => {
+  toggleNoteOnNextStep(4);
+
+});
+
+document.getElementById('ohihat-sound').addEventListener('mousedown', async () => {
+  toggleNoteOnNextStep(5);
+});
+
+// document.getElementById('bass-up').addEventListener('mousedown', () => {
+//   bassNoteIndex++;
+//   if(bassNoteIndex > bassNotes.length)
+//     bassNoteIndex = 0;
+// });
+
+// document.getElementById('bass-down').addEventListener('mousedown', () => {
+//   bassNoteIndex--;
+//   if(bassNoteIndex < 0)
+//     bassNoteIndex = bassNotes.length - 1;
+// });
+
+document.getElementById('bass-sound').addEventListener('mousedown', () =>{
+  toggleNoteOnNextStep(6);
+});
+
+var metronomeDiv = document.getElementById("ui-metronome");
+var volumeSlider = document.getElementById("ui-volume-slider");
+
+metronomeDiv.addEventListener('mousemove', function(e){
+  if(e.buttons == 1){
+    const rect = metronomeDiv.getBoundingClientRect();
+    const yOffset = rect.bottom - e.clientY;
+
+    // Restringir el tamaño del div interno entre 50px y 150px
+    let newHeight = Math.min(150, Math.max(50, yOffset));
+    volumeSlider.style.height = newHeight + 'px';
+
+    let volume = -40 + ((newHeight - 50) / 100) * 40;
+
+    if(newHeight == 50){
+      metronomeEnabled = false;
+    }
+    else{
+      metronomeEnabled = true;
+    }
+
+    metronome.volume.value = volume;
+  }
+});
+
+metronomeDiv.addEventListener('touchmove', function(e){
+  e.preventDefault();  // Evitar el scroll de la pantalla
+
+  if(e.buttons == 1 || e.touches.length > 0){  // Verificar si hay algún toque activo
+    const rect = metronomeDiv.getBoundingClientRect();
+    const yOffset = rect.bottom - e.touches[0].clientY; // Usar el primer toque en lugar de clientY
+    
+    // Restringir el tamaño del div interno entre 50px y 150px
+    let newHeight = Math.min(150, Math.max(50, yOffset));
+    volumeSlider.style.height = newHeight + 'px';
+
+    let volume = -40 + ((newHeight - 50) / 100) * 40;
+
+    if(newHeight == 50){
+      metronomeEnabled = false;
+    } else {
+      metronomeEnabled = true;
+    }
+
+    metronome.volume.value = volume;
+  }
+}, { passive: false });  // Añadir 'passive: false' para permitir preventDefault en touchmove
+
 //URL FROM
 
-// Función para crear una URL con la secuencia en la query string
 function createShareableLink(sequence, bpm) {
-  // Convertir el array en una cadena JSON y codificarla
+
   const encodedSequence = encodeURIComponent(JSON.stringify(sequence));
   
-  // Crear la URL actual con el parámetro `sequence`
   const baseUrl = window.location.origin + window.location.pathname;
   const shareableUrl = `${baseUrl}?sequence=${encodedSequence}&bpm=${bpm}`;
   
   return shareableUrl;
 }
 
-// Función para obtener la secuencia desde la query string
 function getSequenceFromUrl() {
   const params = new URLSearchParams(window.location.search);
   
   if (params.has('sequence')) {
     const encodedSequence = params.get('sequence');
     try {
-      // Decodificar y convertir de nuevo a array de booleanos
       const decodedSequence = JSON.parse(decodeURIComponent(encodedSequence));
       return decodedSequence;
     } catch (e) {
@@ -224,21 +395,17 @@ function getSequenceFromUrl() {
   return null;
 }
 
-// Evento para el botón "Compartir"
 document.getElementById('share').addEventListener('click', () => {
   const shareableUrl = createShareableLink(buttonStates, Tone.Transport.bpm.value);
   console.log(shareableUrl);
 
-    // Verificar si la API del portapapeles está disponible
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      // Si está disponible, copiar el enlace al portapapeles
       navigator.clipboard.writeText(shareableUrl).then(() => {
         alert("Shared link copied");
       }).catch(err => {
         console.error('Error al copiar el enlace:', err);
       });
     } else {
-      // Si no está disponible, usar un campo de entrada como alternativa
       let tempInput = document.createElement('input');
       tempInput.value = shareableUrl;
       document.body.appendChild(tempInput);
@@ -253,7 +420,6 @@ document.getElementById('share').addEventListener('click', () => {
 window.onload = function() {
   const sharedSequence = getSequenceFromUrl();
   if (sharedSequence) {
-    // Aquí puedes cargar la secuencia en tu UI
     console.log("Secuencia cargada desde URL:");
     buttonStates = sharedSequence;
 
@@ -275,8 +441,8 @@ window.onload = function() {
   if(params.has('bpm')){
     const bpm = params.get('bpm');
 
-    Tone.Transport.bpm.value = bpm; // Cambiar el BPM del transporte global
-    bpmValue.textContent = bpm; // Mostrar el valor del BPM actual
+    Tone.Transport.bpm.value = bpm; 
+    bpmValue.textContent = bpm;
     bpmSlider.value = bpm;
   }
 };
@@ -321,10 +487,8 @@ const loop = new Tone.Loop((time) => {
   }
 
   for (let i = 0; i < buttonStates.length; i++) {
-    // let $row = $rows[i];
-    let note = notes[i];
-    // let $input = $row.querySelector(`input:nth-child(${step + 1})`);
 
+    let note = notes[i];
     let state = buttonStates[i][step];
     
     if(state){
@@ -484,9 +648,6 @@ const loop = new Tone.Loop((time) => {
       if(i == 6){
         if (kickSide == 0) {
 
-          // hipsUpAction.stop();
-          // hipsDownAction.stop();
-
           rightKickAction.stop();
           rightKickAction.reset();
           rightBackKickAction.stop();
@@ -502,9 +663,6 @@ const loop = new Tone.Loop((time) => {
           kickSide = 1;
         }
         else {
-
-          // hipsUpAction.stop();
-          // hipsDownAction.stop();
 
           if(bassNoteIndex % 2 == 0){
             rightBackKickAction.play();
@@ -527,167 +685,12 @@ const loop = new Tone.Loop((time) => {
 
 }, "8n");
 
-// Iniciar el loop
 
 let bpmValue = document.getElementById('bpm-value');
 
 Tone.Transport.bpm.value = 120;
-Tone.Transport.start();
-loop.start(0);  // Empieza en el tiempo 0
-
-// BOTONES DEL LOOP
-
-let stopButton = document.getElementById('stop');
-let playButton = document.getElementById('play');
-
-stopButton.addEventListener('mousedown', () => {
-  loop.stop();
-});
-
-// Escuchar el clic en el botón para iniciar el audio
-playButton.addEventListener('mousedown', async () => {
-  await Tone.start();
-
-  loop.start();
-  bpmValue.textContent = Math.round(Tone.Transport.bpm.value);
-
-  playButton.classList.toggle('active');
-});
-
-document.getElementById('reset').addEventListener('mousedown', () =>{
-  $rows.forEach(($row, i) => {
-    const buttons = $row.querySelectorAll('.seq-button');
-  
-    buttons.forEach((button, j) => {
-      buttonStates[i][j] = false;
-      button.classList.remove('active');
-    });
-
-    hipsDownAction.stop();
-    hipsUpAction.stop();
-    headNodInAction.stop();
-    headNodOutAction.stop();
-    armsAction.stop();
-    leftKickAction.stop();
-    rightKickAction.stop();
-    headNodLeftAction.stop();
-    headNodRightAction.stop();
-    torsoLeftAction.stop();
-    torsoRightAction.stop();
-    robotArmsLeftAction.stop();
-    robotArmsRightAction.stop();
-    clapAction.stop();
-
-  });
-});
-
-document.getElementById('bpm-minus').addEventListener('mousedown', () => {
-  Tone.Transport.bpm.value -= 5;
-  if(Tone.Transport.bpm.value <= 60)
-    Tone.Transport.bpm.value = 60;
-  bpmValue.textContent = Math.round(Tone.Transport.bpm.value);
-  
-});
-
-document.getElementById('bpm-plus').addEventListener('mousedown', () => {
-  Tone.Transport.bpm.value += 5;
-  if(Tone.Transport.bpm.value >= 200)
-    Tone.Transport.bpm.value = 200;
-  bpmValue.textContent = Math.round(Tone.Transport.bpm.value);
-});
-
-document.getElementById('bassdrum-sound').addEventListener('mousedown', async () => {
-
-  toggleNoteOnNextStep(0);
-
-});
-
-document.getElementById('snare-sound').addEventListener('mousedown', async () => {
-  toggleNoteOnNextStep(1);
-});
-
-document.getElementById('tom-sound').addEventListener('mousedown', async () => {
-  toggleNoteOnNextStep(2);
-
-});
-
-document.getElementById('clap-sound').addEventListener('mousedown', async () => {
-  toggleNoteOnNextStep(3);
-
-});
-
-document.getElementById('chihat-sound').addEventListener('mousedown', async () => {
-  toggleNoteOnNextStep(4);
-
-});
-
-document.getElementById('ohihat-sound').addEventListener('mousedown', async () => {
-  toggleNoteOnNextStep(5);
-});
-
-document.getElementById('bass-up').addEventListener('mousedown', () => {
-  bassNoteIndex++;
-  if(bassNoteIndex > bassNotes.length)
-    bassNoteIndex = 0;
-});
-
-document.getElementById('bass-down').addEventListener('mousedown', () => {
-  bassNoteIndex--;
-  if(bassNoteIndex < 0)
-    bassNoteIndex = bassNotes.length - 1;
-});
-
-document.getElementById('bass-sound').addEventListener('mousedown', () =>{
-  toggleNoteOnNextStep(6);
-});
-
-var metronomeDiv = document.getElementById("ui-metronome");
-var volumeSlider = document.getElementById("ui-volume-slider");
-
-metronomeDiv.addEventListener('mousemove', function(e){
-  if(e.buttons == 1){
-    const rect = metronomeDiv.getBoundingClientRect();
-    const yOffset = rect.bottom - e.clientY;
-
-    // Restringir el tamaño del div interno entre 50px y 150px
-    let newHeight = Math.min(150, Math.max(50, yOffset));
-    volumeSlider.style.height = newHeight + 'px';
-
-    let volume = -40 + ((newHeight - 50) / 100) * 40;
-
-    if(newHeight == 50){
-      metronomeEnabled = false;
-    }
-    else{
-      metronomeEnabled = true;
-    }
-
-    metronome.volume.value = volume;
-  }
-});
-
-metronomeDiv.addEventListener('touchmove', function(e){
-  e.preventDefault();  // Evitar el scroll de la pantalla
-
-  if(e.buttons == 1 || e.touches.length > 0){  // Verificar si hay algún toque activo
-    const rect = metronomeDiv.getBoundingClientRect();
-    const yOffset = rect.bottom - e.touches[0].clientY; // Usar el primer toque en lugar de clientY
-    
-    // Restringir el tamaño del div interno entre 50px y 150px
-    let newHeight = Math.min(150, Math.max(50, yOffset));
-    volumeSlider.style.height = newHeight + 'px';
-
-    let volume = -40 + ((newHeight - 50) / 100) * 40;
-
-    if(newHeight == 50){
-      metronomeEnabled = false;
-    } else {
-      metronomeEnabled = true;
-    }
-
-    metronome.volume.value = volume;
-  }
-}, { passive: false });  // Añadir 'passive: false' para permitir preventDefault en touchmove
+// Tone.Transport.start();
+// loop.start(0);  // Empieza en el tiempo 0
 
 //THREE JS PART
 
@@ -1051,70 +1054,60 @@ loader.load('models/human_model_v01.glb', function (gltf) {
 
 
   const skeletonHelper = new THREE.SkeletonHelper(character);
-  // scene.add(skeletonHelper);
 
-  let startTime = Date.now();
-  const clock = new THREE.Clock();
 
-  const targetFPS = 15;
-  const frameDuration = 1000 / targetFPS;  // Duración de un frame en milisegundos
-
-  let lastFrameTime = 0;
-
-  let cameraXRadius = 0.1;
-  let cameraYRadius = 0.01;
-  let cameraSpeed = 0.5;
-
-  let lookAt = new THREE.Vector3(char.hips.position.x, char.hips.position.y, char.hips.position.z);
+  lookAt = new THREE.Vector3(char.hips.position.x, char.hips.position.y, char.hips.position.z);
   lookAt.y += 0.5;
-
-  function animate(time) {
-
-    const deltaTime = time - lastFrameTime;
-
-    if (deltaTime >= frameDuration) {
-      lastFrameTime = time - (deltaTime % frameDuration);  // Resetear el tiempo de inicio del frame
-
-      // Actualizar la escena, animaciones y renderizar
-      const delta = clock.getDelta();
-
-      const elapsedTime = clock.getElapsedTime();
-
-      const noiseX = noise2D(elapsedTime*0.5, 0);
-      const noiseY = noise2D(elapsedTime*0.5, 10);
-
-      const angle = elapsedTime * cameraSpeed;
-
-      const x = Math.cos(angle) * cameraXRadius;
-      const y = Math.sin(angle) * cameraYRadius;
-
-      camera.position.x += x;
-      camera.position.y += y;
-
-      camera.position.x += noiseX*0.02;
-      camera.position.y += noiseY*0.02;
-
-      camera.lookAt(lookAt);
-
-      character.rotation.y += Math.sin(delta / 2);
-
-      mixer.update(delta);  // Actualiza las animaciones
-      
-      // controls.update();
-      composer.render(scene, camera);
-      
-    }
-
-    requestAnimationFrame(animate);
-  }
 
   animate();
 });
 
-// controls.update();
-
-
 // FUNCTIONS
+
+
+function animate(time) {
+
+  const deltaTime = time - lastFrameTime;
+
+  if (deltaTime >= frameDuration) {
+
+    lastFrameTime = time - (deltaTime % frameDuration);  // Resetear el tiempo de inicio del frame
+
+    // Actualizar la escena, animaciones y renderizar
+    const delta = clock.getDelta();
+
+    const elapsedTime = clock.getElapsedTime();
+    
+    if(started){
+      const noiseX = noise2D(elapsedTime*0.5, 0);
+      const noiseY = noise2D(elapsedTime*0.5, 10);
+  
+      const angle = elapsedTime * cameraSpeed;
+  
+      const x = Math.cos(angle) * cameraXRadius;
+      const y = Math.sin(angle) * cameraYRadius;
+  
+      camera.position.x += x;
+      camera.position.y += y;
+  
+      camera.position.x += noiseX*0.02;
+      camera.position.y += noiseY*0.02;
+  
+  
+      character.rotation.y += Math.sin(delta / 2);
+    }
+
+    camera.lookAt(lookAt);
+
+    mixer.update(delta);  // Actualiza las animaciones
+    
+    // controls.update();
+    composer.render(scene, camera);
+    
+  }
+
+  requestAnimationFrame(animate);
+}
 
 function animateRotation(object, amount, duration, original) {
   // Animar rotación del objeto en el eje Y
@@ -1196,8 +1189,8 @@ async function ensureToneStarted() {
   const state = Tone.context.state;  // Obtener el estado del contexto de audio
   if (state === 'suspended') {
     // Si el contexto está suspendido, iniciar Tone
-    await Tone.start();
-    console.log('Tone.js ha sido iniciado');
+    // await Tone.start();
+    // console.log('Tone.js ha sido iniciado');
   }
   return Tone.context.state === 'running';  // Verificar si Tone está corriendo
 }

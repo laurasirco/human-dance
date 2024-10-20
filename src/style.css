@@ -36,10 +36,16 @@ body{
   display: none; /* Ocultar scrollbar */
 }
 
+#canvas-container {
+  position: relative;       /* Posiciona al contenedor para que el botón se base en él */
+  width: 100%;              /* El contenedor tiene el ancho completo */
+  height: 100vh;            /* Altura completa de la ventana */
+}
+
 #threejs-container{
-  position: absolute;
+  /* position: absolute;
   left: 0;
-  top: 0;
+  top: 0; */
   display: block;
   width: 100%; /* Asegura que ocupe todo el ancho disponible */
   height: 100vh; /* Asegura que ocupe todo el alto */
@@ -181,6 +187,9 @@ body{
   align-items: center;
 }
 
+.seq-button{
+  height:33px;
+}
 
 .seq-button.active {
   background-color: #01DEBB; /* Cambiar a color verde cuando esté pulsado */
@@ -224,4 +233,27 @@ body{
 
 .gray:hover{
   background-color: #E1E1E1;
+}
+
+#start-button {
+  position: absolute;
+  top: 50%;               /* Centrar verticalmente */
+  left: calc(50% + 200px);
+  transform: translate(-50%, -50%); /* Ajustar para que quede centrado en ambos ejes */
+  padding: 20px 40px;     /* Tamaño del botón */
+  font-size: 24px;        /* Tamaño de texto */
+  background-color: #FFA125;  /* Color de fondo */
+  color: white;           /* Color de texto */
+  border: none;           /* Sin borde */
+  border-radius: 10px;    /* Bordes redondeados */
+  cursor: pointer;        /* Manito de clic */
+  z-index: 3;             /* Asegura que esté sobre el canvas */
+}
+
+#start-button:hover {
+  background-color: #FFBC63;  /* Cambiar color al pasar el mouse por encima */
+}
+
+#start-button:active {
+  background-color: #FFA125;  /* Color cuando el botón está presionado */
 }
