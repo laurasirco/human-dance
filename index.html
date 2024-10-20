@@ -5,8 +5,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dancing Man</title>
-  <script type="module" crossorigin src="/human-dance/assets/index-CxKiSeGz.js"></script>
-  <link rel="stylesheet" crossorigin href="/human-dance/assets/index-Df5MZ1JT.css">
+  <script type="module" crossorigin src="/human-dance/assets/index-DttVUzaX.js"></script>
+  <link rel="stylesheet" crossorigin href="/human-dance/assets/index-DsM1RCvO.css">
 </head>
 
 <body>
@@ -18,7 +18,7 @@
         <h2 id="bpm-value">120</h2>
       </div>
       <div id="title-field">
-        <p>untitled.dance</p>
+        <p  id="title-text" contenteditable="true">untitled.dance</p>
       </div>
     </div>
 
@@ -45,7 +45,7 @@
       <button class="ui-chord-button red"></button>
       <button class="ui-chord-button red"></button>
       <div class="ui-column ui-horizontal-separator"></div>
-      <button class="ui-seq-sound-button yellow" id="bass-sound"><img src="img/icons/i-single.svg"></button>
+      <!-- <button class="ui-seq-sound-button yellow" id="bass-sound"><img src="img/icons/i-single.svg"></button> -->
     </div>
 
     <div class="ui-row">
@@ -58,10 +58,12 @@
 
       <div class="ui-column ui-horizontal-separator"></div>
 
-      <div class="ui-column gray" id="bass-note-control">
+      <button class="ui-seq-sound-button yellow" id="bass-sound"><img src="img/icons/i-single.svg"></button>
+
+      <!-- <div class="ui-column gray" id="bass-note-control">
               <button class="ui-button yellow" id="bass-up"><img src="img/icons/i-up.svg"></button>
               <button class="ui-button yellow" id="bass-down"><img src="img/icons/i-down.svg"></button>
-      </div>
+      </div> -->
     </div>
 
     <div class="ui-row">
@@ -217,9 +219,12 @@
     </div>
 
   </div>
-  <canvas id="threejs-container"></canvas>
-  <!-- <div id="bg-canvas">
-  </div> -->
+  <div id="canvas-container">   <!-- Contenedor para el canvas y el botón -->
+    <canvas id="threejs-container"></canvas>  <!-- Escena 3D con Three.js -->
+    <button id="start-button">START</button>  <!-- Botón centrado sobre el canvas -->
+  </div>
+
+
 </body>
 
 </html>
