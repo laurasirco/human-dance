@@ -51,6 +51,9 @@ var started = false;
 
 // TONE PART
 
+let index = 0;
+let sequenceSteps = 16;
+
 var tr808 = new Tone.Players({
   35: 'audio/tr808/BD.WAV', //BASS DRUM
   37: 'audio/tr808/SD.WAV', //SNARE DRUM
@@ -111,6 +114,62 @@ let chordsNotes = [
 
 // BUTTONS
 
+const track = document.querySelector('.carousel-track');
+const slides = Array.from(track.children);
+const slideWidth = slides[0].getBoundingClientRect().width;
+console.log(slideWidth);
+let currentSlide = 0;
+
+let startX = 0;
+let currentTranslate = 0;
+let prevTranslate = 0;
+let isDragging = false;
+const swipeThreshold = 50;
+
+function startSwipe(x){
+  startX = x;
+  track.style.transition = 'none';
+}
+
+function moveSwipe(x){
+  const currentX = x;
+  const deltaX = currentX - startX;
+
+  // Solo actualizamos la posición si el desplazamiento supera el umbral
+  if (Math.abs(deltaX) > swipeThreshold) {
+    currentTranslate = prevTranslate + deltaX;
+    track.style.transform = `translateX(${currentTranslate}px)`;
+    isDragging = true;
+  }
+}
+
+function endSwipe(){
+  if(isDragging){
+    track.style.transition = 'transform 0.3s ease';
+    isDragging = false;
+  
+    const movedBy = currentTranslate - prevTranslate;
+  
+    // Solo cambiar de slide si el desplazamiento total supera el umbral
+    if (Math.abs(movedBy) > swipeThreshold) {
+      if (movedBy < -slideWidth / 4 && currentSlide < slides.length - 1) {
+        currentSlide++;
+      } else if (movedBy > slideWidth / 4 && currentSlide > 0) {
+        currentSlide--;
+      }
+    }
+  
+    // Actualizar la posición del carrusel al slide actual
+    prevTranslate = -currentSlide * slideWidth;
+    track.style.transform = `translateX(${prevTranslate}px)`;
+    isDragging = false;  
+  }
+}
+
+track.addEventListener('touchstart', e => startSwipe(e.touches[0].clientX));
+track.addEventListener('touchmove', e => moveSwipe(e.touches[0].clientX));
+track.addEventListener('touchend', endSwipe);
+
 let mouseDown = false;
 
 document.addEventListener('mousedown', () => {
@@ -135,7 +194,7 @@ document.addEventListener('touchcancel', () => {
 
 const $rows = document.body.querySelectorAll('.seq-row');
 
-let buttonStates = Array.from({ length: $rows.length }, () => Array(16).fill(false));
+let buttonStates = Array.from({ length: $rows.length }, () => Array(sequenceSteps).fill(false));
 
 $rows.forEach(($row, i) => {
   const buttons = $row.querySelectorAll('.seq-button');
@@ -157,6 +216,7 @@ $rows.forEach(($row, i) => {
 });
 
 const chordsButtons = document.body.querySelectorAll('.ui-chord-button');
+let chordsSequence = Array(sequenceSteps).fill(-1);
 
 const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
@@ -200,6 +260,21 @@ chordsButtons.forEach((button, i) => {
       }
     });
   }
+});
+
+const bassButtons = document.body.querySelectorAll('.ui-bass-button');
+let bassSequence =  Array(sequenceSteps).fill(-1);
+
+bassButtons.forEach((button, i) => {
+
+  button.addEventListener('mousedown', async () => {
+    const isToneStarted = await ensureToneStarted();
+    if (isToneStarted) {
+      bass.triggerAttackRelease(bassNotes[i], '16n');
+      bassSequence[index%sequenceSteps] = i;
+      toggleNoteOnNextStep(6);
+    }
+  });
 });
 
 
@@ -276,7 +351,6 @@ document.getElementById('bpm-plus').addEventListener('mousedown', () => {
 });
 
 document.getElementById('bassdrum-sound').addEventListener('mousedown', async () => {
-
   toggleNoteOnNextStep(0);
 
 });
@@ -316,57 +390,22 @@ document.getElementById('ohihat-sound').addEventListener('mousedown', async () =
 //     bassNoteIndex = bassNotes.length - 1;
 // });
 
-document.getElementById('bass-sound').addEventListener('mousedown', () =>{
-  toggleNoteOnNextStep(6);
-});
 
 var metronomeDiv = document.getElementById("ui-metronome");
 var volumeSlider = document.getElementById("ui-volume-slider");
 
-metronomeDiv.addEventListener('mousemove', function(e){
-  if(e.buttons == 1){
-    const rect = metronomeDiv.getBoundingClientRect();
-    const yOffset = rect.bottom - e.clientY;
+volumeSlider.addEventListener('mousedown', () =>{
+  metronomeEnabled = !metronomeEnabled;
 
-    // Restringir el tamaño del div interno entre 50px y 150px
-    let newHeight = Math.min(150, Math.max(50, yOffset));
-    volumeSlider.style.height = newHeight + 'px';
+  metronomeDiv.style.backgroundColor = metronomeEnabled ? "#FFA125" : "#FFFFFF";  // Verde si activo, morado si inactivo
 
-    let volume = -40 + ((newHeight - 50) / 100) * 40;
-
-    if(newHeight == 50){
-      metronomeEnabled = false;
-    }
-    else{
-      metronomeEnabled = true;
-    }
-
-    metronome.volume.value = volume;
+  if (metronomeEnabled) {
+    volumeSlider.classList.add("active");
+  } else {
+    volumeSlider.classList.remove("active");
   }
+
 });
-
-metronomeDiv.addEventListener('touchmove', function(e){
-  e.preventDefault();  // Evitar el scroll de la pantalla
-
-  if(e.buttons == 1 || e.touches.length > 0){  // Verificar si hay algún toque activo
-    const rect = metronomeDiv.getBoundingClientRect();
-    const yOffset = rect.bottom - e.touches[0].clientY; // Usar el primer toque en lugar de clientY
-    
-    // Restringir el tamaño del div interno entre 50px y 150px
-    let newHeight = Math.min(150, Math.max(50, yOffset));
-    volumeSlider.style.height = newHeight + 'px';
-
-    let volume = -40 + ((newHeight - 50) / 100) * 40;
-
-    if(newHeight == 50){
-      metronomeEnabled = false;
-    } else {
-      metronomeEnabled = true;
-    }
-
-    metronome.volume.value = volume;
-  }
-}, { passive: false });  // Añadir 'passive: false' para permitir preventDefault en touchmove
 
 //URL FROM
 
@@ -449,11 +488,9 @@ window.onload = function() {
 
 // TONE LOOP SETTING
 
-let index = 0;
-
 const loop = new Tone.Loop((time) => {
 
-  let step = index % 16;
+  let step = index % sequenceSteps;
 
   $rows.forEach(($row, i) => {
     const buttons = $row.querySelectorAll('.seq-button');
@@ -498,8 +535,9 @@ const loop = new Tone.Loop((time) => {
       }
       else{
         if(i == 6){
-          bassNoteIndex = getRandomInt(0, bassNotes.length-1);
-          bass.triggerAttackRelease(bassNotes[bassNoteIndex], '16n', time);
+          // bassNoteIndex = getRandomInt(0, bassNotes.length-1);
+          let bassNote = bassSequence[step+1];
+          bass.triggerAttackRelease(bassNotes[bassNote], '16n', time);
         }
       }
 
@@ -695,11 +733,12 @@ Tone.Transport.bpm.value = 120;
 //THREE JS PART
 
 const canvas = document.getElementById("threejs-container");
+console.log(canvas);
 
 const loader = new GLTFLoader();
 const scene = new THREE.Scene();
-const containerWidth = canvas.offsetWidth;
-const containerHeight = canvas.offsetHeight;
+let containerWidth = window.innerWidth;
+let containerHeight = window.innerHeight;
 
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false, alpha: false });
 renderer.setSize(containerWidth, containerHeight);
@@ -723,12 +762,27 @@ composer.addPass( outputPass );
 
 // Handle window resizing
 window.addEventListener('resize', () => {
-  const newWidth = window.innerWidth; // Restamos el ancho fijo de #ui
+  const newWidth = window.innerWidth;
   const newHeight = window.innerHeight;
+  containerHeight = newHeight;
+  containerWidth = newWidth;
   renderer.setSize(newWidth, newHeight);
   composer.setSize(newWidth, newHeight);
   camera.aspect = newWidth / newHeight;
   camera.updateProjectionMatrix();
+
+  let originalLookAt = new THREE.Vector3(char.hips.position.x, char.hips.position.y, char.hips.position.z);
+
+  if(newWidth >= 768){
+    character.position.x = 1;
+    lookAt.y = originalLookAt.y + 0.5;
+    camera.position.y = gltfCamera.position.y + 1;
+  }
+  else{
+    character.position.x = 0;      
+    lookAt.y = originalLookAt.y - 0.2;
+    camera.position.y = gltfCamera.position.y;
+  }
   // controls.update();
 
 });
@@ -793,17 +847,16 @@ scene.add(directionalLight3);
 // const hemisphereLight = new THREE.HemisphereLight('red', 'white', 0.9)
 // scene.add(hemisphereLight)
 
+let gltfCamera = null;
+
 loader.load('models/scene_v01.gltf', function(gltf){
   scene.add(gltf.scene);
 
   gltf.scene.traverse(function (object) {
 
-    let gltfCamera = null;
-
     if (object.isMesh) {
       object.castShadow = true;
       object.receiveShadow = true;
-
 
       if(object.name.includes('techo')){
         object.castShadow = false;
@@ -833,7 +886,13 @@ loader.load('models/scene_v01.gltf', function(gltf){
       camera.position.copy(gltfCamera.position);  // Aseguramos que la posición esté alineada
       camera.quaternion.copy(gltfCamera.quaternion);  // Alineamos la rotación
 
-      camera.position.y += 1;
+      if(containerWidth >= 768){
+        camera.position.y = gltfCamera.position.y + 1;
+      }
+      else{
+        camera.position.y = gltfCamera.position.y;
+      }
+
     }
 
   });
@@ -846,8 +905,9 @@ loader.load('models/human_model_v01.glb', function (gltf) {
   character = gltf.scene;
   character.castShadow = true;
 
-  character.position.x += 1;
-
+  if(containerWidth >= 768){
+    character.position.x += 1;
+  }
   const skinnedMesh = character.getObjectByProperty('type', 'SkinnedMesh');
   const ske = skinnedMesh.skeleton;
   char.skinnedMesh = skinnedMesh;
@@ -1056,8 +1116,15 @@ loader.load('models/human_model_v01.glb', function (gltf) {
   const skeletonHelper = new THREE.SkeletonHelper(character);
 
 
+  let originalLookAt = new THREE.Vector3(char.hips.position.x, char.hips.position.y, char.hips.position.z);
   lookAt = new THREE.Vector3(char.hips.position.x, char.hips.position.y, char.hips.position.z);
-  lookAt.y += 0.5;
+
+  if(containerWidth >= 768){
+    lookAt.y = originalLookAt.y + 0.5;
+  }
+  else{
+    lookAt.y = originalLookAt.y - 0.3;
+  }
 
   animate();
 });
@@ -1188,9 +1255,6 @@ function getRandomInt(min, max) {
 async function ensureToneStarted() {
   const state = Tone.context.state;  // Obtener el estado del contexto de audio
   if (state === 'suspended') {
-    // Si el contexto está suspendido, iniciar Tone
-    // await Tone.start();
-    // console.log('Tone.js ha sido iniciado');
   }
   return Tone.context.state === 'running';  // Verificar si Tone está corriendo
 }
@@ -1201,27 +1265,28 @@ async function toggleNoteOnNextStep(row) {
 
   if (isToneStarted) {
 
-    let s = index % 16;
+    let s = index % sequenceSteps;
 
     s -= 1;
     if(s < 0) s = 0;
 
     const $rows = document.body.querySelectorAll('.seq-row');
-
-    buttonStates[row][s] = !buttonStates[row][s];
     const buttons = $rows[row].querySelectorAll('.seq-button');
-
     let button = buttons[s];
-    button.classList.toggle('active');
 
     if(row <= 5){
+      buttonStates[row][s] = !buttonStates[row][s];
+
+      button.classList.toggle('active');
+
       let note = notes[row];
       tr808.player(note).start();
     }
+    
     else{
-      if(row == 6){
-        bass.triggerAttackRelease(bassNotes[bassNoteIndex], '16n');
-      }
+      buttonStates[row][s] = true;
+      button.classList.add('active');
+
     }
   }
 }

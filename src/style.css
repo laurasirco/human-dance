@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap');
 
-body{
+body {
   margin: 0;
   padding: 0;
   height: 100vh;
@@ -12,172 +12,335 @@ body{
 
 * {
   user-select: none;
-  -webkit-user-select: none;  /* Para Safari */
-  -moz-user-select: none;     /* Para Firefox */
-  -ms-user-select: none;      /* Para IE */
+  -webkit-user-select: none;
+  /* Para Safari */
+  -moz-user-select: none;
+  /* Para Firefox */
+  -ms-user-select: none;
+  /* Para IE */
 }
 
 #ui {
   position: absolute;
   left: 0;
-  top: 0;
-  width: 400px; /* Ancho fijo de la columna */
-  height: 100vh;
-  background-color: rgba(234, 234, 234, 0.8); /* Fondo semitransparente */
-  z-index: 2; /* Z-index mayor que el canvas */
-  padding: 16px;
+  bottom: 0;
+  width: 100%;
+  /* Ancho fijo de la columna */
+  height: 170px;
+  background-color: rgba(234, 234, 234, 0.5);
+  /* Fondo semitransparente */
+  z-index: 2;
+  /* Z-index mayor que el canvas */
+  padding: 0px;
+  border-radius: 42px;
   overflow-y: scroll;
   box-sizing: border-box;
-  scrollbar-width: none; /* Ocultar scrollbar en Firefox */
+  scrollbar-width: none;
+  /* Ocultar scrollbar en Firefox */
 
 }
 
 #ui::-webkit-scrollbar {
-  display: none; /* Ocultar scrollbar */
+  display: none;
+  /* Ocultar scrollbar */
+}
+
+/* Contenedor del carrusel */
+.carousel-container {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  touch-action: pan-y;
+  background-color: #EAEAEA 50%;
+}
+
+/* Carrusel de elementos (divs) */
+.carousel-track {
+  display: flex;
+  transition: transform 0.3s ease;
+  flex-direction: row;
+}
+
+/* Cada "slide" del carrusel */
+.carousel-slide {
+  min-width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  position: relative;
+  text-align: center;
+  height: 150px;
+  align-items: center;
+  justify-content: center;
+}
+
+.seq-slide{
+display: none;
+}
+
+#start-button {
+  position: absolute;
+  top: calc(50% - 95px);
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 16px 32px;
+  font-family: 'Space Grotesk';
+  font-size: 32px;
+  font-weight: 800;
+  color: white;  background-color: #FFA125;
+  color: white;
+  border: none;
+  border-radius: 64px;
+  cursor: pointer;
+  z-index: 3;
+}
+
+@media (min-width: 768px) {
+
+  #ui {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 400px;
+    /* Ancho fijo de la columna */
+    height: 100vh;
+    background-color: rgba(234, 234, 234, 0.8);
+    /* Fondo semitransparente */
+    z-index: 2;
+    /* Z-index mayor que el canvas */
+    padding: 0px;
+    overflow-y: scroll;
+    box-sizing: border-box;
+    scrollbar-width: none;
+    /* Ocultar scrollbar en Firefox */
+  
+  }
+
+  .carousel-container {
+    overflow: visible;
+    /* Permitimos que todos los slides sean visibles */
+  }
+
+  .carousel-track {
+    flex-direction: column;
+    /* Colocar los slides en columna */
+    transform: none;
+    /* Sin transformación en pantallas grandes */
+  }
+
+  .carousel-slide {
+    min-width: auto;
+    /* Eliminar el ancho mínimo */
+  }
+
+  #start-button {
+    position: absolute;
+    top: 50%;
+    left: calc(50% + 200px);
+    transform: translate(-50%, -50%);
+    padding: 20px 40px;
+    font-size: 24px;
+    background-color: #FFA125;
+    color: white;
+    border: none;
+    border-radius: 32px;
+    cursor: pointer;
+    z-index: 3;
+  }
+
+  .seq-slide{
+    min-width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    position: relative;
+    text-align: center;
+    height: 650px;
+    align-items: center;
+    /* Centrar contenido verticalmente */
+    justify-content: center;
+    /* Centrar contenido horizontalmente */
+    display: block;
+  }
 }
 
 #canvas-container {
-  position: relative;       /* Posiciona al contenedor para que el botón se base en él */
-  width: 100%;              /* El contenedor tiene el ancho completo */
-  height: 100vh;            /* Altura completa de la ventana */
+  position: relative;
+  /* Posiciona al contenedor para que el botón se base en él */
+  width: 100%;
+  /* El contenedor tiene el ancho completo */
+  height: 100vh;
+  /* Altura completa de la ventana */
 }
 
-#threejs-container{
+#threejs-container {
   /* position: absolute;
   left: 0;
   top: 0; */
   display: block;
-  width: 100%; /* Asegura que ocupe todo el ancho disponible */
-  height: 100vh; /* Asegura que ocupe todo el alto */
+  width: 100%;
+  /* Asegura que ocupe todo el ancho disponible */
+  height: 100vh;
+  /* Asegura que ocupe todo el alto */
   background-color: white;
 }
 
 #chords {
-  position: absolute; /* Hacer el div flotante */
-  bottom: 0; /* Pegado a la parte inferior */
-  left: 600px; /* Pegado a la izquierda */
-  right: 0; /* Ancho completo */
-  height: 100px; /* Ajusta la altura según lo necesites */
-  z-index: 3; /* Mayor que el canvas */
-  display: flex; /* Para alinear el contenido si es necesario */
-  align-items: center; /* Centrar verticalmente el contenido */
-  justify-content: center;
-  padding: 10px; /* Espaciado interno */
-}
-
-.ui-row{
+  position: absolute;
+  /* Hacer el div flotante */
+  bottom: 0;
+  /* Pegado a la parte inferior */
+  left: 600px;
+  /* Pegado a la izquierda */
+  right: 0;
+  /* Ancho completo */
+  height: 100px;
+  /* Ajusta la altura según lo necesites */
+  z-index: 3;
+  /* Mayor que el canvas */
   display: flex;
-  gap: 0px;
+  /* Para alinear el contenido si es necesario */
+  align-items: center;
+  /* Centrar verticalmente el contenido */
+  justify-content: center;
+  padding: 10px;
+  /* Espaciado interno */
 }
 
-.ui-column{
+.ui-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.ui-subrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 50%;
+  padding: 0;
+}
+
+.ui-column {
   display: flex;
   flex-direction: column;
+  width: 33%;
+  height: 100%;
 }
 
-.ui-spacer{
+.ui-spacer {
   display: flex;
   height: 50px;
 }
 
-.ui-button{
-  width: 50px;
-  height: 50px;
+.ui-button {
+  width: 16.66%;
+  height: 100%;
+  border-style: none;
+  border-radius: 37.5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.ui-chord-button, .ui-bass-button, .ui-voice-button {
+  width: 33%;
+  padding-top: 33%;
   border-style: none;
   border-radius: 25px;
   display: flex;
   justify-content: center;
   align-items: center;
+  box-sizing: border-box;
 }
 
-.ui-chord-button{
-  width: 100px;
-  height: 100px;
-  border-style: none;
-  border-radius: 25px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.ui-vertical-separator{
+.ui-vertical-separator {
   height: 10px;
 }
 
-.ui-horizontal-separator{
+.ui-horizontal-separator {
   width: 20px;
 }
 
-.ui-seq-sound-button{
-  width: 50px;
-  height: 100px;
+.ui-seq-sound-button {
+  width: 16.66%;
+  height: 100%;
   border-style: none;
-  border-radius: 25px;
+  border-radius: 37.5px;
   display: flex;
   justify-content: center;
   align-items: flex-end;
 }
 
-.ui-seq-sound-button img{
+.ui-seq-sound-button img {
   margin-bottom: 10px;
 }
 
-#bpm-field{
-  height: 100px;
-  width: 100px;
+#bpm-field {
+  width: 33%;
+  height: 100%;
   background-color: #FFA125;
-  border-radius: 25px;
+  border-radius: 37.5px;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-#bpm-field h2{
+#bpm-field h2 {
   font-family: 'Space Grotesk';
   font-size: 32px;
+  color: white;
 }
 
-#title-field{
-  height: 100px;
-  width: 200px;
-  background-color: #A83FF1;
-  border-radius: 25px;
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-}
-
-#title-field p{
-  font-family: 'Space Grotesk';
-  font-size: 16px;
-  margin: 16px;
-}
-
-#ui-metronome{
-  height: 150px;
-  width: 50px;
-  background-color: #A83FF1;
-  border-radius: 25px;
-  margin-top: -100px;
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-end;
-}
-
-#ui-volume-slider{
-  width: 50px;
-  height: 50px;
-  border-radius: 25px;
+#title-field {
+  width: 33%;
+  height: 100%;
+  background-color: white;
+  border-radius: 37.5px;
   display: flex;
   justify-content: center;
-  align-items: flex-end;
+  align-items: center;
+  overflow: hidden;
 }
 
-#ui-volume-slider img{
+#title-field p {
+  font-family: 'Space Grotesk';
+  font-size: 12px;
+  color:#A83FF1;
+}
+
+#ui-metronome {
+  height: 100%;
+  width: 33%;
+  background-color: white;
+  border-radius: 37.5px;
+  display: flex;
+}
+
+#ui-volume-slider {
+  width: 50%;
+  height: 100%;
+  border-radius: 37.5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.3s ease;
+}
+
+#ui-volume-slider.active {
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+#ui-volume-slider img {
   margin: 15px;
 }
 
-#bass-note-control{
+#bass-note-control {
   height: 100px;
   width: 50px;
   /* background-color: #C8C8C8; */
@@ -187,31 +350,34 @@ body{
   align-items: center;
 }
 
-.seq-button{
-  height:33px;
+.seq-button {
+  height: 6.25%;
+  width: 100%;
 }
 
 .seq-button.active {
-  background-color: #01DEBB; /* Cambiar a color verde cuando esté pulsado */
+  background-color: #01DEBB;
+  /* Cambiar a color verde cuando esté pulsado */
 }
 
 .seq-button.current {
-  background-color: white; /* Cambiar a color verde cuando esté pulsado */
+  background-color: white;
+  /* Cambiar a color verde cuando esté pulsado */
 }
 
-.purple{
+.purple {
   background-color: #A83FF1;
 }
 
-.purple:hover{
+.purple:hover {
   background-color: #BA6AF1;
 }
 
-.yellow{
+.yellow {
   background-color: #FFA125;
 }
 
-.yellow:hover{
+.yellow:hover {
   background-color: #FFBC63;
 }
 
@@ -219,41 +385,18 @@ body{
   background-color: red;
 } */
 
-.red{
+.red {
   background-color: #FE4B47;
 }
 
-.red:hover{
+.red:hover {
   background-color: #FF6B68;
 }
 
-.gray{
+.gray {
   background-color: #C8C8C8;
 }
 
-.gray:hover{
+.gray:hover {
   background-color: #E1E1E1;
-}
-
-#start-button {
-  position: absolute;
-  top: 50%;               /* Centrar verticalmente */
-  left: calc(50% + 200px);
-  transform: translate(-50%, -50%); /* Ajustar para que quede centrado en ambos ejes */
-  padding: 20px 40px;     /* Tamaño del botón */
-  font-size: 24px;        /* Tamaño de texto */
-  background-color: #FFA125;  /* Color de fondo */
-  color: white;           /* Color de texto */
-  border: none;           /* Sin borde */
-  border-radius: 10px;    /* Bordes redondeados */
-  cursor: pointer;        /* Manito de clic */
-  z-index: 3;             /* Asegura que esté sobre el canvas */
-}
-
-#start-button:hover {
-  background-color: #FFBC63;  /* Cambiar color al pasar el mouse por encima */
-}
-
-#start-button:active {
-  background-color: #FFA125;  /* Color cuando el botón está presionado */
 }
