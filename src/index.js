@@ -9,7 +9,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createNoise2D } from 'simplex-noise';
 
-
+const thresholdWidth = 768;
 const noise2D = createNoise2D();
 
 let character;
@@ -29,7 +29,7 @@ var robotArmsSide = 0;
 var kickSide = 0;
 var headNod = false;
 var headNodSide = 0;
-var metronomeEnabled = false;
+var metronomeEnabled = true;
 
 var cameraZoomed = true;
 var cameraRotatedSide = -1;
@@ -47,9 +47,20 @@ let cameraXRadius = 0.1;
 let cameraYRadius = 0.01;
 let cameraSpeed = 0.5;
 
+const ambientLight = new THREE.AmbientLight('azure', 1.0);
+let ambientColors = ['red', 'blue', 'green'];
+
 var started = false;
 
 // TONE PART
+
+let bassNotes = ['A2', 'C2', 'E2', 'B2'];
+let voiceNotes = ['A4', 'C4', 'E4', 'B4'];
+let chordsNotes = [
+  ['A3', 'C3', 'E4', 'B4'],
+  ['F3', 'A3', 'C4', 'E4'],
+  ['G3', 'B3', 'D4', 'A4']
+];
 
 let index = 0;
 let sequenceSteps = 16;
@@ -88,8 +99,15 @@ bass.oscillator.type = "triangle";
 bass.connect(reverb);
 bass.toDestination();
 
-let bassNotes = ['A2', 'C2', 'E2', 'B2'];
 let bassNoteIndex = 0;
+
+var voice = new Tone.Synth({
+});
+voice.oscillator.type = "sine";
+voice.connect(reverb);
+voice.toDestination();
+
+let voiceNoteIndex = 0;
 
 var chords = new Tone.PolySynth({
 }).toDestination();
@@ -106,25 +124,30 @@ chords.set({
 
 chords.volume.value = -10;
 
-let chordsNotes = [
-  ['A3', 'C3', 'E4', 'B4'],
-  ['F3', 'A3', 'C4', 'E4'],
-  ['G3', 'B3', 'D4', 'A4']
-];
+
 
 // BUTTONS
 
 const track = document.querySelector('.carousel-track');
 const slides = Array.from(track.children);
+slides.pop();
 const slideWidth = slides[0].getBoundingClientRect().width;
 console.log(slideWidth);
 let currentSlide = 0;
-
 let startX = 0;
 let currentTranslate = 0;
 let prevTranslate = 0;
 let isDragging = false;
 const swipeThreshold = 50;
+
+const indicators = document.querySelectorAll('.indicator');
+
+// Función para actualizar el indicador activo
+function updateIndicators() {
+  indicators.forEach((indicator, index) => {
+    indicator.classList.toggle('active', index === currentSlide);
+  });
+}
 
 function startSwipe(x){
   startX = x;
@@ -163,6 +186,7 @@ function endSwipe(){
     prevTranslate = -currentSlide * slideWidth;
     track.style.transform = `translateX(${prevTranslate}px)`;
     isDragging = false;  
+    updateIndicators();
   }
 }
 
@@ -216,7 +240,7 @@ $rows.forEach(($row, i) => {
 });
 
 const chordsButtons = document.body.querySelectorAll('.ui-chord-button');
-let chordsSequence = Array(sequenceSteps).fill(-1);
+let playingChord = false;
 
 const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
@@ -227,6 +251,8 @@ chordsButtons.forEach((button, i) => {
       const isToneStarted = await ensureToneStarted();
       if (isToneStarted) {
         chords.triggerAttack(chordsNotes[i]);
+        ambientLight.color.set(ambientColors[i]);
+        playingChord = true;
       }
     });
 
@@ -235,6 +261,9 @@ chordsButtons.forEach((button, i) => {
       const isToneStarted = await ensureToneStarted();
       if (isToneStarted) {
         chords.triggerRelease(chordsNotes[i]);
+        ambientLight.color.set('azure');
+        ambientLight.intensity = 1.0;
+        playingChord = false;
       }
     });
 
@@ -243,6 +272,9 @@ chordsButtons.forEach((button, i) => {
       const isToneStarted = await ensureToneStarted();
       if (isToneStarted) {
         chords.triggerRelease(chordsNotes[i]);
+        ambientLight.color.set('azure');
+        ambientLight.intensity = 1.0;
+        playingChord = false;
       }
     });
   } else {
@@ -250,6 +282,8 @@ chordsButtons.forEach((button, i) => {
       const isToneStarted = await ensureToneStarted();
       if (isToneStarted) {
         chords.triggerAttack(chordsNotes[i]);
+        ambientLight.color.set(ambientColors[i]);
+        playingChord = true;
       }
     });
 
@@ -257,6 +291,9 @@ chordsButtons.forEach((button, i) => {
       const isToneStarted = await ensureToneStarted();
       if (isToneStarted) {
         chords.triggerRelease(chordsNotes[i]);
+        ambientLight.color.set('azure');
+        ambientLight.intensity = 1.0;
+        playingChord = false;
       }
     });
   }
@@ -273,6 +310,21 @@ bassButtons.forEach((button, i) => {
       bass.triggerAttackRelease(bassNotes[i], '16n');
       bassSequence[index%sequenceSteps] = i;
       toggleNoteOnNextStep(6);
+    }
+  });
+});
+
+const voiceButtons = document.body.querySelectorAll('.ui-voice-button');
+let voiceSequence =  Array(sequenceSteps).fill(-1);
+
+voiceButtons.forEach((button, i) => {
+
+  button.addEventListener('mousedown', async () => {
+    const isToneStarted = await ensureToneStarted();
+    if (isToneStarted) {
+      voice.triggerAttackRelease(voiceNotes[i], '16n');
+      voiceSequence[index%sequenceSteps] = i;
+      toggleNoteOnNextStep(7);
     }
   });
 });
@@ -397,7 +449,7 @@ var volumeSlider = document.getElementById("ui-volume-slider");
 volumeSlider.addEventListener('mousedown', () =>{
   metronomeEnabled = !metronomeEnabled;
 
-  metronomeDiv.style.backgroundColor = metronomeEnabled ? "#FFA125" : "#FFFFFF";  // Verde si activo, morado si inactivo
+  // metronomeDiv.style.backgroundColor = metronomeEnabled ? "#FFA125" : "#FFFFFF";  // Verde si activo, morado si inactivo
 
   if (metronomeEnabled) {
     volumeSlider.classList.add("active");
@@ -538,6 +590,10 @@ const loop = new Tone.Loop((time) => {
           // bassNoteIndex = getRandomInt(0, bassNotes.length-1);
           let bassNote = bassSequence[step+1];
           bass.triggerAttackRelease(bassNotes[bassNote], '16n', time);
+        }
+        if(i == 7){
+          let voiceNote = voiceSequence[step+1];
+          voice.triggerAttackRelease(voiceNotes[voiceNote], '16n', time);
         }
       }
 
@@ -750,7 +806,12 @@ const camera = new THREE.PerspectiveCamera(15, canvas.offsetWidth / canvas.offse
 // const controls = new OrbitControls( camera, renderer.domElement );
 
 const composer = new EffectComposer( renderer );
-const renderPixelatedPass = new RenderPixelatedPass( 4, scene, camera );
+let renderPixelatedPass = new RenderPixelatedPass( 4, scene, camera );
+
+if(containerWidth <= thresholdWidth){
+  renderPixelatedPass = new RenderPixelatedPass( 2, scene, camera );
+}
+
 renderPixelatedPass.normalEdgeStrength = 0.05;
 renderPixelatedPass.depthEdgeStrength = 0.5;
 composer.addPass( renderPixelatedPass );
@@ -773,7 +834,7 @@ window.addEventListener('resize', () => {
 
   let originalLookAt = new THREE.Vector3(char.hips.position.x, char.hips.position.y, char.hips.position.z);
 
-  if(newWidth >= 768){
+  if(newWidth >= thresholdWidth){
     character.position.x = 1;
     lookAt.y = originalLookAt.y + 0.5;
     camera.position.y = gltfCamera.position.y + 1;
@@ -788,7 +849,6 @@ window.addEventListener('resize', () => {
 });
 
 // Añadir luces a la escena
-const ambientLight = new THREE.AmbientLight('azure', 1.0);
 scene.add(ambientLight);
 
 const directionalLight = new THREE.DirectionalLight('azure', 2);
@@ -886,7 +946,7 @@ loader.load('models/scene_v01.gltf', function(gltf){
       camera.position.copy(gltfCamera.position);  // Aseguramos que la posición esté alineada
       camera.quaternion.copy(gltfCamera.quaternion);  // Alineamos la rotación
 
-      if(containerWidth >= 768){
+      if(containerWidth >= thresholdWidth){
         camera.position.y = gltfCamera.position.y + 1;
       }
       else{
@@ -905,7 +965,7 @@ loader.load('models/human_model_v01.glb', function (gltf) {
   character = gltf.scene;
   character.castShadow = true;
 
-  if(containerWidth >= 768){
+  if(containerWidth >= thresholdWidth){
     character.position.x += 1;
   }
   const skinnedMesh = character.getObjectByProperty('type', 'SkinnedMesh');
@@ -1119,7 +1179,7 @@ loader.load('models/human_model_v01.glb', function (gltf) {
   let originalLookAt = new THREE.Vector3(char.hips.position.x, char.hips.position.y, char.hips.position.z);
   lookAt = new THREE.Vector3(char.hips.position.x, char.hips.position.y, char.hips.position.z);
 
-  if(containerWidth >= 768){
+  if(containerWidth >= thresholdWidth){
     lookAt.y = originalLookAt.y + 0.5;
   }
   else{
@@ -1162,6 +1222,10 @@ function animate(time) {
   
   
       character.rotation.y += Math.sin(delta / 2);
+
+      if(playingChord){
+        ambientLight.intensity = Math.abs(Math.sin(time)) * 2;
+      }
     }
 
     camera.lookAt(lookAt);
@@ -1286,7 +1350,6 @@ async function toggleNoteOnNextStep(row) {
     else{
       buttonStates[row][s] = true;
       button.classList.add('active');
-
     }
   }
 }

@@ -77,6 +77,26 @@ body {
 display: none;
 }
 
+.carousel-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 0px;
+}
+
+.indicator {
+  width: 8px;
+  height: 8px;
+  background-color: #ddd;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.indicator.active {
+  background-color: #fff; /* Color para el punto activo */
+}
+
 #start-button {
   position: absolute;
   top: calc(50% - 95px);
@@ -130,6 +150,10 @@ display: none;
   .carousel-slide {
     min-width: auto;
     /* Eliminar el ancho mínimo */
+  }
+
+  .carousel-indicators{
+    display: none;
   }
 
   #start-button {
@@ -245,6 +269,7 @@ display: none;
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
+  
 }
 
 .ui-chord-button, .ui-bass-button, .ui-voice-button {
@@ -399,4 +424,12 @@ display: none;
 
 .gray:hover {
   background-color: #E1E1E1;
+}
+
+.shadow{
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 0px 20px;
+}
+
+.text-shadow{
+  text-shadow: rgba(0, 0, 0, 0.2) 0px 0px 20px;
 }
