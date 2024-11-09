@@ -26,7 +26,7 @@ body {
   bottom: 0;
   width: 100%;
   /* Ancho fijo de la columna */
-  height: 170px;
+  height: 190px;
   background-color: rgba(234, 234, 234, 0.5);
   /* Fondo semitransparente */
   z-index: 2;
@@ -63,14 +63,15 @@ body {
 
 /* Cada "slide" del carrusel */
 .carousel-slide {
-  min-width: 100%;
+  min-width: 96%;
   box-sizing: border-box;
-  padding: 12px;
   position: relative;
   text-align: center;
   height: 150px;
   align-items: center;
   justify-content: center;
+  padding: 12px;
+  margin: 2%;
 }
 
 .seq-slide{
@@ -453,10 +454,6 @@ display: none;
   background-color: #5AB5FF;
 }
 
-/* .yellow.active{
-  background-color: red;
-} */
-
 .red {
   background-color: #FE4B47;
 }
@@ -487,4 +484,28 @@ display: none;
 
 .text-shadow{
   text-shadow: rgba(0, 0, 0, 0.2) 0px 0px 20px;
+}
+
+.light-yellow{
+  background-color: #FFEDD4;
+}
+
+.light-red{
+  background-color: #FFCAC9;
+}
+
+.light-purple{
+  background-color: #E6C2FF;
+}
+
+.light-aqua{
+  background-color: #D3FFF8;
+}
+
+.light-blue{
+  background-color: #CEE9FF;
+}
+
+.rounded{
+  border-radius: 32px;
 }

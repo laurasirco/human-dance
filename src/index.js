@@ -9,6 +9,18 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createNoise2D } from 'simplex-noise';
 
+function checkIOS() {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function alertSilentMode() {
+  if (checkIOS()) {
+    alert("Please turn off silent mode to hear audio.\nPor favor, desactiva el modo silencio para escuchar el audio.");
+  }
+}
+
+// Llama a esta función cuando el usuario inicie la reproducción de audio.
+
 const thresholdWidth = 768;
 const noise2D = createNoise2D();
 
@@ -131,7 +143,7 @@ chords.volume.value = -10;
 const track = document.querySelector('.carousel-track');
 const slides = Array.from(track.children);
 slides.pop();
-const slideWidth = slides[0].getBoundingClientRect().width;
+const slideWidth = track.getBoundingClientRect().width;
 console.log(slideWidth);
 let currentSlide = 0;
 let startX = 0;
@@ -303,7 +315,17 @@ const bassButtons = document.body.querySelectorAll('.ui-bass-button');
 let bassSequence =  Array(sequenceSteps).fill(-1);
 
 bassButtons.forEach((button, i) => {
-
+if(isTouchDevice){
+  button.addEventListener('touchstart', async () => {
+    const isToneStarted = await ensureToneStarted();
+    if (isToneStarted) {
+      bass.triggerAttackRelease(bassNotes[i], '16n');
+      bassSequence[index%sequenceSteps] = i;
+      toggleNoteOnNextStep(6);
+    }
+  });
+}
+else{
   button.addEventListener('mousedown', async () => {
     const isToneStarted = await ensureToneStarted();
     if (isToneStarted) {
@@ -312,13 +334,25 @@ bassButtons.forEach((button, i) => {
       toggleNoteOnNextStep(6);
     }
   });
+}
+
 });
 
 const voiceButtons = document.body.querySelectorAll('.ui-voice-button');
 let voiceSequence =  Array(sequenceSteps).fill(-1);
 
 voiceButtons.forEach((button, i) => {
-
+if(isTouchDevice){
+  button.addEventListener('touchstart', async () => {
+    const isToneStarted = await ensureToneStarted();
+    if (isToneStarted) {
+      voice.triggerAttackRelease(voiceNotes[i], '16n');
+      voiceSequence[index%sequenceSteps] = i;
+      toggleNoteOnNextStep(7);
+    }
+  });
+}
+else{
   button.addEventListener('mousedown', async () => {
     const isToneStarted = await ensureToneStarted();
     if (isToneStarted) {
@@ -327,6 +361,7 @@ voiceButtons.forEach((button, i) => {
       toggleNoteOnNextStep(7);
     }
   });
+}
 });
 
 
@@ -402,33 +437,62 @@ document.getElementById('bpm-plus').addEventListener('mousedown', () => {
   bpmValue.textContent = Math.round(Tone.Transport.bpm.value);
 });
 
-document.getElementById('bassdrum-sound').addEventListener('mousedown', async () => {
-  toggleNoteOnNextStep(0);
-
-});
-
-document.getElementById('snare-sound').addEventListener('mousedown', async () => {
-  toggleNoteOnNextStep(1);
-});
-
-document.getElementById('tom-sound').addEventListener('mousedown', async () => {
-  toggleNoteOnNextStep(2);
-
-});
-
-document.getElementById('clap-sound').addEventListener('mousedown', async () => {
-  toggleNoteOnNextStep(3);
-
-});
-
-document.getElementById('chihat-sound').addEventListener('mousedown', async () => {
-  toggleNoteOnNextStep(4);
-
-});
-
-document.getElementById('ohihat-sound').addEventListener('mousedown', async () => {
-  toggleNoteOnNextStep(5);
-});
+if(isTouchDevice){
+  document.getElementById('bassdrum-sound').addEventListener('touchstart', async () => {
+    toggleNoteOnNextStep(0);
+  });
+  
+  document.getElementById('snare-sound').addEventListener('touchstart', async () => {
+    toggleNoteOnNextStep(1);
+  });
+  
+  document.getElementById('tom-sound').addEventListener('touchstart', async () => {
+    toggleNoteOnNextStep(2);
+  
+  });
+  
+  document.getElementById('clap-sound').addEventListener('touchstart', async () => {
+    toggleNoteOnNextStep(3);
+  
+  });
+  
+  document.getElementById('chihat-sound').addEventListener('touchstart', async () => {
+    toggleNoteOnNextStep(4);
+  
+  });
+  
+  document.getElementById('ohihat-sound').addEventListener('touchstart', async () => {
+    toggleNoteOnNextStep(5);
+  });
+}
+else{
+  document.getElementById('bassdrum-sound').addEventListener('mousedown', async () => {
+    toggleNoteOnNextStep(0);
+  });
+  
+  document.getElementById('snare-sound').addEventListener('mousedown', async () => {
+    toggleNoteOnNextStep(1);
+  });
+  
+  document.getElementById('tom-sound').addEventListener('mousedown', async () => {
+    toggleNoteOnNextStep(2);
+  
+  });
+  
+  document.getElementById('clap-sound').addEventListener('mousedown', async () => {
+    toggleNoteOnNextStep(3);
+  
+  });
+  
+  document.getElementById('chihat-sound').addEventListener('mousedown', async () => {
+    toggleNoteOnNextStep(4);
+  
+  });
+  
+  document.getElementById('ohihat-sound').addEventListener('mousedown', async () => {
+    toggleNoteOnNextStep(5);
+  });
+}
 
 let drumsButtons = [document.getElementById('bassdrum-sound'), document.getElementById('snare-sound'), document.getElementById('tom-sound'), document.getElementById('clap-sound'), document.getElementById('chihat-sound'), document.getElementById('ohihat-sound')];
 
@@ -1205,6 +1269,8 @@ loader.load('models/human_model_v01.glb', function (gltf) {
   }
 
   animate();
+  alertSilentMode();
+
 });
 
 // FUNCTIONS
