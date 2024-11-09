@@ -430,6 +430,8 @@ document.getElementById('ohihat-sound').addEventListener('mousedown', async () =
   toggleNoteOnNextStep(5);
 });
 
+let drumsButtons = [document.getElementById('bassdrum-sound'), document.getElementById('snare-sound'), document.getElementById('tom-sound'), document.getElementById('clap-sound'), document.getElementById('chihat-sound'), document.getElementById('ohihat-sound')];
+
 // document.getElementById('bass-up').addEventListener('mousedown', () => {
 //   bassNoteIndex++;
 //   if(bassNoteIndex > bassNotes.length)
@@ -453,8 +455,10 @@ volumeSlider.addEventListener('mousedown', () =>{
 
   if (metronomeEnabled) {
     volumeSlider.classList.add("active");
+    metronomeDiv.classList.add("active");
   } else {
     volumeSlider.classList.remove("active");
+    metronomeDiv.classList.remove("active");
   }
 
 });
@@ -553,6 +557,16 @@ const loop = new Tone.Loop((time) => {
     buttons[step].classList.add('current');
   });
 
+  drumsButtons.forEach((button) =>{
+    button.classList.remove('active');
+  });
+  bassButtons.forEach((button) =>{
+    button.classList.remove('active');
+  });
+  voiceButtons.forEach((button) =>{
+    button.classList.remove('active');
+  });
+
   clapAction.stop();
   initialPoseAction.play();
 
@@ -579,21 +593,25 @@ const loop = new Tone.Loop((time) => {
 
     let note = notes[i];
     let state = buttonStates[i][step];
-    
+
     if(state){
 
       if(i <= 5){
         tr808.player(note).start(time);
+        drumsButtons[i].classList.add('active');
       }
       else{
         if(i == 6){
           // bassNoteIndex = getRandomInt(0, bassNotes.length-1);
           let bassNote = bassSequence[step+1];
           bass.triggerAttackRelease(bassNotes[bassNote], '16n', time);
+          bassButtons[bassNote].classList.add('active');
+
         }
         if(i == 7){
           let voiceNote = voiceSequence[step+1];
           voice.triggerAttackRelease(voiceNotes[voiceNote], '16n', time);
+          voiceButtons[voiceNote].classList.add('active');
         }
       }
 

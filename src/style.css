@@ -182,7 +182,7 @@ display: none;
     /* Centrar contenido verticalmente */
     justify-content: center;
     /* Centrar contenido horizontalmente */
-    display: block;
+    display: none;
   }
 }
 
@@ -283,6 +283,30 @@ display: none;
   box-sizing: border-box;
 }
 
+/* .ui-chord-button{
+  background-color: #FE4B47;
+}
+
+.ui-bass-button{
+  background-color: #A83FF1;
+}
+
+.ui-voice-button{
+  background-color: #32A3FF;
+}
+
+.ui-chord-button:hover{
+  background-color:#FF6B68;
+}
+
+.ui-bass-button:hover{
+  background-color:#BA6AF1;
+}
+
+.ui-voice-button:hover{
+  background-color: #5AB5FF;
+} */
+
 .ui-vertical-separator {
   height: 10px;
 }
@@ -299,6 +323,15 @@ display: none;
   display: flex;
   justify-content: center;
   align-items: flex-end;
+  background-color: #FFA125;
+}
+
+.ui-seq-sound-button:hover{
+  background-color: #FFBC63;
+}
+
+.active{
+  background-color: white;
 }
 
 .ui-seq-sound-button img {
@@ -341,9 +374,14 @@ display: none;
 #ui-metronome {
   height: 100%;
   width: 33%;
-  background-color: white;
+  background-color:white;
   border-radius: 37.5px;
   display: flex;
+}
+
+#ui-metronome.active{
+  transition: background-color 0.3s ease;
+  background-color:#01DEBB;
 }
 
 #ui-volume-slider {
@@ -353,12 +391,13 @@ display: none;
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  background-color:white;
 }
 
 #ui-volume-slider.active {
   transform: translateX(100%);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, background-color 0.3s ease;
 }
 
 #ui-volume-slider img {
@@ -394,7 +433,7 @@ display: none;
   background-color: #A83FF1;
 }
 
-.purple:hover {
+.purple:hover, .purple.active {
   background-color: #BA6AF1;
 }
 
@@ -402,8 +441,16 @@ display: none;
   background-color: #FFA125;
 }
 
-.yellow:hover {
+.yellow:hover, .yellow.active {
   background-color: #FFBC63;
+}
+
+.blue {
+  background-color: #32A3FF;
+}
+
+.blue:hover, .blue.active {
+  background-color: #5AB5FF;
 }
 
 /* .yellow.active{
@@ -414,15 +461,23 @@ display: none;
   background-color: #FE4B47;
 }
 
-.red:hover {
+.red:hover, .red.active {
   background-color: #FF6B68;
+}
+
+.aqua {
+  background-color: #01DEBB;
+}
+
+.aqua:hover, .aqua.active {
+  background-color: #21F1D0;
 }
 
 .gray {
   background-color: #C8C8C8;
 }
 
-.gray:hover {
+.gray:hover, .gray.active {
   background-color: #E1E1E1;
 }
 
