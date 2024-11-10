@@ -143,7 +143,7 @@ chords.volume.value = -10;
 const track = document.querySelector('.carousel-track');
 const slides = Array.from(track.children);
 slides.pop();
-const slideWidth = track.getBoundingClientRect().width;
+let slideWidth = 0;
 console.log(slideWidth);
 let currentSlide = 0;
 let startX = 0;
@@ -151,6 +151,17 @@ let currentTranslate = 0;
 let prevTranslate = 0;
 let isDragging = false;
 const swipeThreshold = 50;
+
+function calculateSlideWidth() {
+  return track.getBoundingClientRect().width;
+}
+
+function updateSlideWidth() {
+  slideWidth = calculateSlideWidth();
+  const offset = -currentSlide * slideWidth;
+  track.style.transition = 'none';  // Eliminar la transición para un ajuste instantáneo
+  track.style.transform = `translateX(${offset}px)`;
+}
 
 const indicators = document.querySelectorAll('.indicator');
 
@@ -202,9 +213,30 @@ function endSwipe(){
   }
 }
 
+function goToSlide(index) {
+  // Actualizar la posición de `track`
+  const offset = -index * slideWidth;
+  track.style.transition = 'transform 0.3s ease';
+  track.style.transform = `translateX(${offset}px)`;
+
+  // Actualizar el estado de los indicadores
+  indicators[currentSlide].classList.remove('active');
+  indicators[index].classList.add('active');
+
+  currentSlide = index; // Actualizar el índice actual
+}
+
 track.addEventListener('touchstart', e => startSwipe(e.touches[0].clientX));
 track.addEventListener('touchmove', e => moveSwipe(e.touches[0].clientX));
 track.addEventListener('touchend', endSwipe);
+
+
+indicators.forEach(indicator => {
+  indicator.addEventListener('click', (e) => {
+    const index = parseInt(e.target.getAttribute('data-index'), 10);
+    goToSlide(index);
+  });
+});
 
 let mouseDown = false;
 
@@ -926,9 +958,16 @@ window.addEventListener('resize', () => {
     lookAt.y = originalLookAt.y - 0.2;
     camera.position.y = gltfCamera.position.y;
   }
+
+  updateSlideWidth();
+
   // controls.update();
 
 });
+
+window.onload = function() {
+  updateSlideWidth();
+};
 
 // Añadir luces a la escena
 scene.add(ambientLight);

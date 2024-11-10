@@ -275,7 +275,8 @@ display: none;
 
 .ui-chord-button, .ui-bass-button, .ui-voice-button {
   width: 33%;
-  padding-top: 33%;
+  /* padding-top: 33%; */
+  height: 100%;
   border-style: none;
   border-radius: 25px;
   display: flex;
