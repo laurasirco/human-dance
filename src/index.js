@@ -19,6 +19,18 @@ function alertSilentMode() {
   }
 }
 
+document.addEventListener('touchstart', function(event) {
+  if (event.touches.length > 1) {
+    // Evita el zoom con pellizco
+    event.preventDefault();
+  }
+}, { passive: false });
+
+document.addEventListener('gesturestart', function(event) {
+  // Evita el zoom con gesto
+  event.preventDefault();
+});
+
 // Llama a esta función cuando el usuario inicie la reproducción de audio.
 
 const thresholdWidth = 768;
@@ -66,13 +78,85 @@ var started = false;
 
 // TONE PART
 
-let bassNotes = ['A2', 'C2', 'E2', 'B2'];
-let voiceNotes = ['A4', 'C4', 'E4', 'B4'];
-let chordsNotes = [
-  ['A3', 'C3', 'E4', 'B4'],
-  ['F3', 'A3', 'C4', 'E4'],
-  ['G3', 'B3', 'D4', 'A4']
-];
+const chordsInC = {
+  'i': ['A2', 'C3', 'E3', 'G3'],     // Am7
+  'iv': ['D2', 'F2', 'A2', 'C3'],    // Dm7
+  'VI': ['F2', 'A2', 'C3', 'E3'],    // Fmaj7
+  'V': ['E2', 'G2', 'B2', 'D3'],     // E7 (dominante)
+};
+
+const progressionPattern = ['i', 'iv', 'VI', 'V'];
+
+function generateChordProgression() {
+  return progressionPattern.map(degree => chordsInC[degree]);
+}
+
+function getUniqueBassNoteFromChord(chord, usedBassNotes) {
+  let bassNote;
+  do {
+    bassNote = [chord[0], chord[1], chord[2], chord[3]][Math.floor(Math.random() * 4)];
+    bassNote = bassNote.replace('2', '1').replace('3', '2'); // Ajuste a octava de bajo
+  } while (usedBassNotes.includes(bassNote));
+  
+  usedBassNotes.push(bassNote); // Añade la nota seleccionada a la lista de usadas
+  return bassNote;
+}
+
+function getUniqueVoiceNoteFromChord(chord, usedVoiceNotes) {
+  let voiceNote;
+  do {
+    voiceNote = [chord[0], chord[1], chord[2], chord[3]][Math.floor(Math.random() * 4)];
+    voiceNote = voiceNote.replace('2', '3').replace('3', '4');
+  } while (usedVoiceNotes.includes(voiceNote));
+  usedVoiceNotes.push(voiceNote); // Añade la nota seleccionada a la lista de usadas
+  return voiceNote;
+}
+
+function noteToMidi(note) {
+  const noteMap = {
+    'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5, 'F#': 6,
+    'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+  };
+  const pitch = note.slice(0, -1); // Nombre de la nota, sin la octava
+  const octave = parseInt(note.slice(-1)); // Octava de la nota
+  return 12 * (octave + 1) + noteMap[pitch]; // Calcula el número MIDI
+}
+
+function sortNotesByPitch(notes) {
+  return notes.slice().sort((a, b) => noteToMidi(a) - noteToMidi(b));
+}
+
+let chordsNotes = generateChordProgression(); // 4 acordes basados en la progresión vi - IV - I - V
+
+let usedBassNotes = [];
+let usedVoiceNotes = [];
+
+let bassNotes = chordsNotes.map(chord => getUniqueBassNoteFromChord(chord, usedBassNotes));
+let voiceNotes = chordsNotes.map(chord => getUniqueVoiceNoteFromChord(chord, usedVoiceNotes));
+
+bassNotes = sortNotesByPitch(bassNotes);
+voiceNotes = sortNotesByPitch(voiceNotes);
+
+function regenerateHarmonies() {
+  chordsNotes = generateChordProgression();
+  
+  usedBassNotes = [];
+  usedVoiceNotes = [];
+
+  bassNotes = chordsNotes.map(chord => getUniqueBassNoteFromChord(chord, usedBassNotes));
+  voiceNotes = chordsNotes.map(chord => getUniqueVoiceNoteFromChord(chord, usedVoiceNotes));
+
+  bassNotes = sortNotesByPitch(bassNotes);
+  voiceNotes = sortNotesByPitch(voiceNotes);
+
+  console.log("Acordes aleatorios:", chordsNotes);
+  console.log("Notas del bajo:", bassNotes);
+  console.log("Notas de la voz:", voiceNotes);
+}
+
+console.log("Progresión de acordes estilo deep house en A menor:", chordsNotes);
+console.log("Notas del bajo:", bassNotes);
+console.log("Notas de la voz:", voiceNotes);
 
 let index = 0;
 let sequenceSteps = 16;
@@ -93,10 +177,41 @@ var reverb = new Tone.Reverb({
   preDelay: 0.0
 }).toDestination();
 
+// Añadir chorus para el efecto estéreo típico de house
+const chorus = new Tone.Chorus({
+  frequency: 4, // Frecuencia del chorus, en house suele estar entre 1-5 Hz
+  delayTime: 2.5,
+  depth: 1.0
+}).toDestination();
+
+// Añadir delay (eco) para un efecto house
+const delay = new Tone.FeedbackDelay({
+  delayTime: "4n",  // Eco con subdivisión de negra, ajusta según tu tempo
+  feedback: 0.6,    // Cantidad de repetición
+  wet: 0.3          // Cantidad del efecto en el sonido total
+}).toDestination();
+
+const lowpassFilter = new Tone.Filter({
+  frequency: 200, // Frecuencia de corte en 800 Hz (ajústala para más o menos brillo)
+  type: "lowpass",
+  Q: 0 // La resonancia, ajusta para controlar el énfasis cerca de la frecuencia de corte
+}).toDestination();
+
+const autoWah = new Tone.AutoWah(50, 6, -30).toDestination();
+const crusher = new Tone.BitCrusher(4).toDestination();
+
 // tr808.connect(reverb);
 
-var metronome = new Tone.Synth();
-metronome.oscillator.type = 'sine';
+var metronome = new Tone.MetalSynth({
+  frequency: 2000,   // Frecuencia alta para un click agudo
+  envelope: {
+    attack: 0.001,
+    decay: 0.05,   // Decaimiento rápido
+    release: 0.001
+  },
+  harmonicity: 1, // Ajuste para añadir complejidad armónica
+  modulationIndex: 32
+});
 metronome.volume.value = -6;
 metronome.toDestination();
 
@@ -106,17 +221,38 @@ gain.toDestination();
 const notes = [35, 37, 38, 39, 41, 42];
 
 var bass = new Tone.Synth({
+  oscillator: {
+    type: "triangle" 
+  },
+  envelope: {
+    attack: 0.02, // Ataque suave
+    decay: 0.2,
+    sustain: 0.3,
+    release: 1.2
+  }
 });
-bass.oscillator.type = "triangle";
+bass.connect(crusher);
 bass.connect(reverb);
 bass.toDestination();
 
 let bassNoteIndex = 0;
 
 var voice = new Tone.Synth({
+  oscillator: {
+    type: "sine" 
+  },
+  envelope: {
+    attack: 0.02, // Ataque suave
+    decay: 0.2,
+    sustain: 0.6,
+    release: 1.2
+  }
 });
-voice.oscillator.type = "sine";
+voice.connect(lowpassFilter);
+voice.connect(crusher);
+voice.connect(delay);
 voice.connect(reverb);
+
 voice.toDestination();
 
 let voiceNoteIndex = 0;
@@ -135,8 +271,8 @@ chords.set({
 });
 
 chords.volume.value = -10;
-
-
+chords.connect(autoWah);
+chords.connect(reverb);
 
 // BUTTONS
 
@@ -144,7 +280,6 @@ const track = document.querySelector('.carousel-track');
 const slides = Array.from(track.children);
 slides.pop();
 let slideWidth = 0;
-console.log(slideWidth);
 let currentSlide = 0;
 let startX = 0;
 let currentTranslate = 0;
@@ -238,6 +373,64 @@ indicators.forEach(indicator => {
   });
 });
 
+
+function createStaticBorder(container) {
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  const borderRadius = 31; // Ajusta este valor para cambiar el redondeado
+  const borderWidth = 4; // Grosor del borde
+
+  // Crear el SVG con dimensiones iguales al contenedor
+  const svgNS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("width", width);
+  svg.setAttribute("height", height);
+  svg.style.position = "absolute";
+  svg.style.top = "0";
+  svg.style.left = "0";
+  // svg.style.mixBlendMode = 'screen';
+  svg.style.opacity = 0.6;
+
+  // Crear el rectángulo con dimensiones ajustadas para borde interno
+  const rect = document.createElementNS(svgNS, "rect");
+  rect.setAttribute("x", borderWidth / 2);
+  rect.setAttribute("y", borderWidth / 2);
+  rect.setAttribute("width", width - borderWidth);
+  rect.setAttribute("height", height - borderWidth);
+  rect.setAttribute("rx", borderRadius); // Radio de esquina horizontal
+  rect.setAttribute("ry", borderRadius); // Radio de esquina vertical
+  rect.setAttribute("fill", "none");
+  rect.setAttribute("stroke", "#ffffff");
+  rect.setAttribute("stroke-width", borderWidth);
+
+  // Calcular la longitud del perímetro del rectángulo para el efecto de relleno
+  const perimeter = 2 * (width + height); // Perímetro del rectángulo
+  rect.setAttribute("stroke-dasharray", perimeter); // Definir el tamaño total del borde
+  rect.setAttribute("stroke-dashoffset", perimeter); // Ocultar el borde inicialmente
+
+  // Añadir el rectángulo al SVG y el SVG al contenedor
+  svg.appendChild(rect);
+  container.appendChild(svg);
+
+  return rect
+}
+
+function updateBorderFill(rect, step, totalSteps) {
+  const perimeter = rect.getTotalLength(); // Obtener el perímetro
+  const offset = perimeter - (step / totalSteps) * perimeter;
+  rect.setAttribute("stroke-dashoffset", offset); // Ajustar el borde visible según el step
+}
+
+let borderContainers = document.querySelectorAll('.border-container');
+let borderRects = [];
+
+borderContainers.forEach(slide => {
+  let border = createStaticBorder(slide);
+  borderRects.push(border);
+});
+
+console.log(borderRects);
+
 let mouseDown = false;
 
 document.addEventListener('mousedown', () => {
@@ -267,7 +460,6 @@ let buttonStates = Array.from({ length: $rows.length }, () => Array(sequenceStep
 $rows.forEach(($row, i) => {
   const buttons = $row.querySelectorAll('.seq-button');
   
-
   buttons.forEach((button, j) => {
     button.addEventListener('mousedown', () =>{
       buttonStates[i][j] = !buttonStates[i][j];
@@ -346,15 +538,31 @@ chordsButtons.forEach((button, i) => {
 const bassButtons = document.body.querySelectorAll('.ui-bass-button');
 let bassSequence =  Array(sequenceSteps).fill(-1);
 
+function getNextStep(){
+  let s = index % sequenceSteps;
+
+  s -= 1;
+  if(s < 0) s = 0;
+
+  return s;
+}
+
 bassButtons.forEach((button, i) => {
+
 if(isTouchDevice){
   button.addEventListener('touchstart', async () => {
     const isToneStarted = await ensureToneStarted();
     if (isToneStarted) {
       bass.triggerAttackRelease(bassNotes[i], '16n');
-      bassSequence[index%sequenceSteps] = i;
+      bassSequence[getNextStep()] = i;
       toggleNoteOnNextStep(6);
     }
+  });
+  button.addEventListener('touchend', () =>{
+    button.classList.remove('active');
+  });
+  button.addEventListener('touchcancel', () =>{
+    button.classList.remove('active');
   });
 }
 else{
@@ -362,7 +570,7 @@ else{
     const isToneStarted = await ensureToneStarted();
     if (isToneStarted) {
       bass.triggerAttackRelease(bassNotes[i], '16n');
-      bassSequence[index%sequenceSteps] = i;
+      bassSequence[getNextStep()] = i;
       toggleNoteOnNextStep(6);
     }
   });
@@ -370,18 +578,27 @@ else{
 
 });
 
+
+
 const voiceButtons = document.body.querySelectorAll('.ui-voice-button');
 let voiceSequence =  Array(sequenceSteps).fill(-1);
 
 voiceButtons.forEach((button, i) => {
+
 if(isTouchDevice){
   button.addEventListener('touchstart', async () => {
     const isToneStarted = await ensureToneStarted();
     if (isToneStarted) {
       voice.triggerAttackRelease(voiceNotes[i], '16n');
-      voiceSequence[index%sequenceSteps] = i;
+      voiceSequence[getNextStep()] = i;
       toggleNoteOnNextStep(7);
     }
+  });
+  button.addEventListener('touchend', () =>{
+    button.classList.remove('active');
+  });
+  button.addEventListener('touchcancel', () =>{
+    button.classList.remove('active');
   });
 }
 else{
@@ -389,7 +606,7 @@ else{
     const isToneStarted = await ensureToneStarted();
     if (isToneStarted) {
       voice.triggerAttackRelease(voiceNotes[i], '16n');
-      voiceSequence[index%sequenceSteps] = i;
+      voiceSequence[getNextStep()] = i;
       toggleNoteOnNextStep(7);
     }
   });
@@ -400,14 +617,13 @@ else{
 let stopButton = document.getElementById('stop');
 let playButton = document.getElementById('play');
 let startButton = document.getElementById('start-button');
+let reloadButton = document.getElementById('reload');
 
 startButton.addEventListener('mousedown', async () => {
   await Tone.start();
   Tone.Transport.start();
   loop.start();
   // loop.stop();
-
-  console.log("start");
 
   startButton.style.visibility = 'hidden';
   started = true;
@@ -425,6 +641,10 @@ playButton.addEventListener('mousedown', async () => {
   bpmValue.textContent = Math.round(Tone.Transport.bpm.value);
 
   playButton.classList.toggle('active');
+});
+
+reloadButton.addEventListener('mousedown', () => {
+  regenerateHarmonies();
 });
 
 document.getElementById('reset').addEventListener('mousedown', () =>{
@@ -528,19 +748,6 @@ else{
 
 let drumsButtons = [document.getElementById('bassdrum-sound'), document.getElementById('snare-sound'), document.getElementById('tom-sound'), document.getElementById('clap-sound'), document.getElementById('chihat-sound'), document.getElementById('ohihat-sound')];
 
-// document.getElementById('bass-up').addEventListener('mousedown', () => {
-//   bassNoteIndex++;
-//   if(bassNoteIndex > bassNotes.length)
-//     bassNoteIndex = 0;
-// });
-
-// document.getElementById('bass-down').addEventListener('mousedown', () => {
-//   bassNoteIndex--;
-//   if(bassNoteIndex < 0)
-//     bassNoteIndex = bassNotes.length - 1;
-// });
-
-
 var metronomeDiv = document.getElementById("ui-metronome");
 var volumeSlider = document.getElementById("ui-volume-slider");
 
@@ -586,27 +793,27 @@ function getSequenceFromUrl() {
   return null;
 }
 
-document.getElementById('share').addEventListener('click', () => {
-  const shareableUrl = createShareableLink(buttonStates, Tone.Transport.bpm.value);
-  console.log(shareableUrl);
+// document.getElementById('share').addEventListener('click', () => {
+//   const shareableUrl = createShareableLink(buttonStates, Tone.Transport.bpm.value);
+//   console.log(shareableUrl);
 
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(shareableUrl).then(() => {
-        alert("Shared link copied");
-      }).catch(err => {
-        console.error('Error al copiar el enlace:', err);
-      });
-    } else {
-      let tempInput = document.createElement('input');
-      tempInput.value = shareableUrl;
-      document.body.appendChild(tempInput);
-      tempInput.select();
-      document.execCommand('copy');
-      document.body.removeChild(tempInput);
-      alert("Shared link copied");
-    }
+//     if (navigator.clipboard && navigator.clipboard.writeText) {
+//       navigator.clipboard.writeText(shareableUrl).then(() => {
+//         alert("Shared link copied");
+//       }).catch(err => {
+//         console.error('Error al copiar el enlace:', err);
+//       });
+//     } else {
+//       let tempInput = document.createElement('input');
+//       tempInput.value = shareableUrl;
+//       document.body.appendChild(tempInput);
+//       tempInput.select();
+//       document.execCommand('copy');
+//       document.body.removeChild(tempInput);
+//       alert("Shared link copied");
+//     }
 
-});
+// });
 
 window.onload = function() {
   const sharedSequence = getSequenceFromUrl();
@@ -643,6 +850,10 @@ window.onload = function() {
 const loop = new Tone.Loop((time) => {
 
   let step = index % sequenceSteps;
+
+  borderRects.forEach(rect => {
+    updateBorderFill(rect, step, sequenceSteps);
+  });
 
   $rows.forEach(($row, i) => {
     const buttons = $row.querySelectorAll('.seq-button');
@@ -699,13 +910,13 @@ const loop = new Tone.Loop((time) => {
       else{
         if(i == 6){
           // bassNoteIndex = getRandomInt(0, bassNotes.length-1);
-          let bassNote = bassSequence[step+1];
+          let bassNote = bassSequence[step];
           bass.triggerAttackRelease(bassNotes[bassNote], '16n', time);
           bassButtons[bassNote].classList.add('active');
 
         }
         if(i == 7){
-          let voiceNote = voiceSequence[step+1];
+          let voiceNote = voiceSequence[step];
           voice.triggerAttackRelease(voiceNotes[voiceNote], '16n', time);
           voiceButtons[voiceNote].classList.add('active');
         }
@@ -903,7 +1114,6 @@ Tone.Transport.bpm.value = 120;
 //THREE JS PART
 
 const canvas = document.getElementById("threejs-container");
-console.log(canvas);
 
 const loader = new GLTFLoader();
 const scene = new THREE.Scene();
@@ -1452,11 +1662,8 @@ async function toggleNoteOnNextStep(row) {
 
   if (isToneStarted) {
 
-    let s = index % sequenceSteps;
-
-    s -= 1;
-    if(s < 0) s = 0;
-
+    let s = getNextStep();
+    
     const $rows = document.body.querySelectorAll('.seq-row');
     const buttons = $rows[row].querySelectorAll('.seq-button');
     let button = buttons[s];
@@ -1464,7 +1671,7 @@ async function toggleNoteOnNextStep(row) {
     if(row <= 5){
       buttonStates[row][s] = !buttonStates[row][s];
 
-      button.classList.toggle('active');
+      // button.classList.toggle('active');
 
       let note = notes[row];
       tr808.player(note).start();
@@ -1472,7 +1679,7 @@ async function toggleNoteOnNextStep(row) {
     
     else{
       buttonStates[row][s] = true;
-      button.classList.add('active');
+      // button.classList.toggle('active');
     }
   }
 }

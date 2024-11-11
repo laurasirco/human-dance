@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Dancing Man</title>
 </head>
 
@@ -17,7 +17,9 @@
           <button class="ui-button yellow shadow" id="play"><img src="img/icons/i-play.svg"></button>
           <button class="ui-button yellow shadow" id="stop"><img src="img/icons/i-stop.svg"></button>
           <button class="ui-button red shadow" id="reset"><img src="img/icons/i-reset.svg"></button>
-          <button class="ui-button purple shadow" id="share"><img src="img/icons/i-share.svg"></button>
+          <button class="ui-button yellow shadow" id="reload"><img src="img/icons/i-reload.svg"></button>
+
+          <!-- <button class="ui-button purple shadow" id="share"><img src="img/icons/i-share.svg"></button> -->
           <div id="title-field" class="shadow">
             <p  id="title-text" class="text-shadow" contenteditable="true">untitled.dance</p>
           </div>
@@ -40,14 +42,17 @@
           <button class="ui-seq-sound-button yellow shadow" id="clap-sound"><img src="img/icons/i-clap.svg"></button>
           <button class="ui-seq-sound-button yellow shadow" id="chihat-sound"><img src="img/icons/i-closedhihat.svg"></button>
           <button class="ui-seq-sound-button yellow shadow" id="ohihat-sound"><img src="img/icons/i-openhihat.svg"></button>
-        </div>    
+        </div>
+        <div class="border-container"></div>
       </div>
       <div class="carousel-slide light-red rounded shadow">
         <div class="ui-row">
           <button class="ui-chord-button red shadow"></button>
           <button class="ui-chord-button red shadow"></button>
           <button class="ui-chord-button red shadow"></button>
+          <button class="ui-chord-button red shadow"></button>
         </div>
+        <div class="border-container"></div>    
       </div>
       <div class="carousel-slide light-aqua rounded shadow">
         <div class="ui-row">
@@ -56,6 +61,7 @@
           <button class="ui-bass-button aqua shadow"></button>
           <button class="ui-bass-button aqua shadow"></button>
         </div>
+        <div class="border-container"></div>    
       </div>
       <div class="carousel-slide light-blue rounded shadow">
         <div class="ui-row">
@@ -64,6 +70,7 @@
           <button class="ui-voice-button blue shadow"></button>
           <button class="ui-voice-button blue shadow"></button>
         </div>
+        <div class="border-container"></div>    
       </div>
       <div class="seq-slide">
         <div class="ui-row">

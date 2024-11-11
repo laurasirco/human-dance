@@ -10,6 +10,10 @@ body {
   overflow: hidden;
 }
 
+button {
+  -webkit-tap-highlight-color: transparent; /* Oculta el resalte al hacer clic en iOS */
+}
+
 * {
   user-select: none;
   -webkit-user-select: none;
@@ -331,10 +335,10 @@ display: none;
 .ui-seq-sound-button:hover{
   background-color: #FFBC63;
 }
-
+/* 
 .active{
   background-color: white;
-}
+} */
 
 .ui-seq-sound-button img {
   margin-bottom: 10px;
@@ -509,4 +513,11 @@ display: none;
 
 .rounded{
   border-radius: 32px;
+}
+
+.border-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none; /* Evita que interfiera con la interacción de otros elementos */
+
 }
