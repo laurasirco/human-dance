@@ -9,6 +9,9 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createNoise2D } from 'simplex-noise';
 
+
+//CONTENT TO SHARE HERE
+
 function checkIOS() {
   return /iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
@@ -72,7 +75,7 @@ let cameraYRadius = 0.01;
 let cameraSpeed = 0.5;
 
 const ambientLight = new THREE.AmbientLight('azure', 1.0);
-let ambientColors = ['red', 'blue', 'green'];
+let ambientColors = ['greenyellow', 'blue', 'gold', 'pink'];
 
 var started = false;
 
@@ -198,7 +201,7 @@ const lowpassFilter = new Tone.Filter({
 }).toDestination();
 
 const autoWah = new Tone.AutoWah(50, 6, -30).toDestination();
-const crusher = new Tone.BitCrusher(4).toDestination();
+// const crusher = new Tone.BitCrusher(4).toDestination();
 
 // tr808.connect(reverb);
 
@@ -231,7 +234,7 @@ var bass = new Tone.Synth({
     release: 1.2
   }
 });
-bass.connect(crusher);
+// bass.connect(crusher);
 bass.connect(reverb);
 bass.toDestination();
 
@@ -249,7 +252,7 @@ var voice = new Tone.Synth({
   }
 });
 voice.connect(lowpassFilter);
-voice.connect(crusher);
+// voice.connect(crusher);
 voice.connect(delay);
 voice.connect(reverb);
 
@@ -365,7 +368,6 @@ track.addEventListener('touchstart', e => startSwipe(e.touches[0].clientX));
 track.addEventListener('touchmove', e => moveSwipe(e.touches[0].clientX));
 track.addEventListener('touchend', endSwipe);
 
-
 indicators.forEach(indicator => {
   indicator.addEventListener('click', (e) => {
     const index = parseInt(e.target.getAttribute('data-index'), 10);
@@ -373,12 +375,30 @@ indicators.forEach(indicator => {
   });
 });
 
+function getColorFromClass(className) {
+  // Crear un elemento temporal
+  const tempElement = document.createElement('div');
+  tempElement.classList.add(className);
+  document.body.appendChild(tempElement);
+
+  // Obtener el color de fondo del elemento con la clase
+  const color = window.getComputedStyle(tempElement).backgroundColor;
+
+  // Quitar el elemento temporal
+  document.body.removeChild(tempElement);
+
+  return color;
+}
 
 function createStaticBorder(container) {
+
+  const className = container.getAttribute('data-index');
+  const color = getColorFromClass(className);
+
   const width = container.clientWidth;
   const height = container.clientHeight;
   const borderRadius = 31; // Ajusta este valor para cambiar el redondeado
-  const borderWidth = 4; // Grosor del borde
+  const borderWidth = 6; // Grosor del borde
 
   // Crear el SVG con dimensiones iguales al contenedor
   const svgNS = "http://www.w3.org/2000/svg";
@@ -388,8 +408,7 @@ function createStaticBorder(container) {
   svg.style.position = "absolute";
   svg.style.top = "0";
   svg.style.left = "0";
-  // svg.style.mixBlendMode = 'screen';
-  svg.style.opacity = 0.6;
+  svg.style.opacity = 0.9;
 
   // Crear el rectángulo con dimensiones ajustadas para borde interno
   const rect = document.createElementNS(svgNS, "rect");
@@ -400,7 +419,7 @@ function createStaticBorder(container) {
   rect.setAttribute("rx", borderRadius); // Radio de esquina horizontal
   rect.setAttribute("ry", borderRadius); // Radio de esquina vertical
   rect.setAttribute("fill", "none");
-  rect.setAttribute("stroke", "#ffffff");
+  rect.setAttribute("stroke", color);
   rect.setAttribute("stroke-width", borderWidth);
 
   // Calcular la longitud del perímetro del rectángulo para el efecto de relleno
@@ -1235,8 +1254,8 @@ const directionalLight3 = new THREE.DirectionalLight('midnightblue', 3);
 directionalLight3.position.set(4, 2, -1);
 scene.add(directionalLight3);
 
-// const hemisphereLight = new THREE.HemisphereLight('red', 'white', 0.9)
-// scene.add(hemisphereLight)
+const hemisphereLight = new THREE.HemisphereLight('red', 'blue', 0.7)
+scene.add(hemisphereLight)
 
 let gltfCamera = null;
 
