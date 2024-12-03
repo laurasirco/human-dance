@@ -9,6 +9,8 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createNoise2D } from 'simplex-noise';
 const { degToRad } = THREE.MathUtils;
+import LZString from 'lz-string';
+
 
 // TITLE
 
@@ -24,8 +26,6 @@ function updateTitleField() {
     titleElement.textContent = `#${projectTitle}`; // Actualiza el texto con el número generado
   }
 }
-
-//CONTENT TO SHARE HERE
 
 function checkIOS() {
   return /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -857,12 +857,20 @@ function createShareableLink(data) {
     bpm: Tone.Transport.bpm.value,
   };
 
-  // Codifica los datos como JSON, luego los convierte a Base64
-  const encodedData = btoa(JSON.stringify(combinedData));
+  // Convierte los datos a JSON
+  const jsonData = JSON.stringify(combinedData);
+
+  // Comprime los datos JSON con LZ-String
+  const compressedData = LZString.compressToBase64(jsonData);
+
+  // Verifica la longitud antes y después de la compresión
+  // console.log("Original JSON length: ", jsonData.length);
+  // console.log("Compressed Data (Base64) length: ", compressedData.length);
+  // console.log("Compressed Data (Base64): ", compressedData);  // Muestra el Base64 comprimido
 
   // Construye la URL limpia
   const baseUrl = window.location.origin + window.location.pathname;
-  const shareableUrl = `${baseUrl}?data=${encodedData}`;
+  const shareableUrl = `${baseUrl}?data=${encodeURIComponent(compressedData)}`;
 
   return shareableUrl;
 }
@@ -872,10 +880,21 @@ function getSequenceFromUrl() {
   const params = new URLSearchParams(window.location.search);
 
   if (params.has('data')) {
-    const encodedData = params.get('data');
+    const compressedData = params.get('data');
     try {
-      // Decodifica Base64 y convierte de vuelta a JSON
-      const decodedData = JSON.parse(atob(encodedData));
+      // Verifica el valor de 'data' antes de intentar descomprimirlo
+      // console.log("Compressed data from URL:", compressedData);
+
+      // Descomprime los datos usando LZ-String y convierte de vuelta a JSON
+      const decompressedData = LZString.decompressFromBase64(compressedData);
+
+      if (!decompressedData) {
+        // throw new Error("Failed to decompress data.");
+      }
+
+      // console.log("Decompressed Data:", decompressedData);  // Muestra los datos descomprimidos
+
+      const decodedData = JSON.parse(decompressedData);
       return decodedData;
     } catch (e) {
       console.error('Error al decodificar los datos:', e);
@@ -905,6 +924,55 @@ document.getElementById('share').addEventListener('click', () => {
     alert("Shared link copied");
   }
 });
+
+window.onload = function() {
+  updateSlideWidth();
+  projectTitle = generateRandomTitle();
+  updateTitleField();
+
+  borderContainers.forEach(slide => {
+    let border = createStaticBorder(slide);
+    borderRects.push(border);
+  });
+
+  const sharedData = getSequenceFromUrl();
+  if (sharedData) {
+    console.log("Datos cargados desde URL:", sharedData);
+
+    // Restaura las variables
+
+    projectTitle = sharedData.projectTitle;
+    updateTitleField();
+
+    chordsNotes = sharedData.chordsNotes || [];
+    bassNotes = sharedData.bassNotes || [];
+    voiceNotes = sharedData.voiceNotes || [];
+    buttonStates = sharedData.buttonStates || [];
+    bassSequence = sharedData.bassSequence || [];
+    voiceSequence = sharedData.voiceSequence || [];
+    const bpm = sharedData.bpm || 120;
+
+    // Restaura los valores del secuenciador
+    $rows.forEach(($row, i) => {
+      const buttons = $row.querySelectorAll('.seq-button');
+      buttons.forEach((button, j) => {
+        if (buttonStates[i] && buttonStates[i][j]) {
+          button.classList.add('active');
+        } else {
+          button.classList.remove('active');
+        }
+      });
+    });
+
+    // Actualiza el BPM
+    Tone.Transport.bpm.value = bpm;
+    bpmValue.textContent = bpm;
+    bpmSlider.value = bpm;
+    
+  }
+
+};
+
 
 // TONE LOOP SETTING
 
@@ -1332,54 +1400,6 @@ window.addEventListener('resize', () => {
   // controls.update();
 
 });
-
-window.onload = function() {
-  updateSlideWidth();
-  projectTitle = generateRandomTitle();
-  updateTitleField();
-
-  borderContainers.forEach(slide => {
-    let border = createStaticBorder(slide);
-    borderRects.push(border);
-  });
-
-  const sharedData = getSequenceFromUrl();
-  if (sharedData) {
-    console.log("Datos cargados desde URL:", sharedData);
-
-    // Restaura las variables
-
-    projectTitle = sharedData.projectTitle;
-    updateTitleField();
-
-    chordsNotes = sharedData.chordsNotes || [];
-    bassNotes = sharedData.bassNotes || [];
-    voiceNotes = sharedData.voiceNotes || [];
-    buttonStates = sharedData.buttonStates || [];
-    bassSequence = sharedData.bassSequence || [];
-    voiceSequence = sharedData.voiceSequence || [];
-    const bpm = sharedData.bpm || 120;
-
-    // Restaura los valores del secuenciador
-    $rows.forEach(($row, i) => {
-      const buttons = $row.querySelectorAll('.seq-button');
-      buttons.forEach((button, j) => {
-        if (buttonStates[i] && buttonStates[i][j]) {
-          button.classList.add('active');
-        } else {
-          button.classList.remove('active');
-        }
-      });
-    });
-
-    // Actualiza el BPM
-    Tone.Transport.bpm.value = bpm;
-    bpmValue.textContent = bpm;
-    bpmSlider.value = bpm;
-    
-  }
-
-};
 
 // Añadir luces a la escena
 scene.add(ambientLight);

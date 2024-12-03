@@ -1,5 +1,5 @@
 export default {
-  base: '/human-dance/',
+  base: '/',
   server: {
       host: '0.0.0.0'
     }
