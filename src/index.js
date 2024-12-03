@@ -10,6 +10,20 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createNoise2D } from 'simplex-noise';
 const { degToRad } = THREE.MathUtils;
 
+// TITLE
+
+let projectTitle;
+
+function generateRandomTitle() {
+  return Math.floor(10000 + Math.random() * 90000); // Genera un número entre 10000 y 99999
+}
+
+function updateTitleField() {
+  const titleElement = document.getElementById('title-text');
+  if (titleElement) {
+    titleElement.textContent = `#${projectTitle}`; // Actualiza el texto con el número generado
+  }
+}
 
 //CONTENT TO SHARE HERE
 
@@ -830,82 +844,67 @@ volumeSlider.addEventListener('mousedown', () =>{
 
 //URL FROM
 
-function createShareableLink(sequence, bpm) {
+function createShareableLink(data) {
+  // Combina los datos en un solo objeto
+  const combinedData = {
+    projectTitle,
+    chordsNotes,
+    bassNotes,
+    voiceNotes,
+    buttonStates,
+    bassSequence,
+    voiceSequence,
+    bpm: Tone.Transport.bpm.value,
+  };
 
-  const encodedSequence = encodeURIComponent(JSON.stringify(sequence));
-  
+  // Codifica los datos como JSON, luego los convierte a Base64
+  const encodedData = btoa(JSON.stringify(combinedData));
+
+  // Construye la URL limpia
   const baseUrl = window.location.origin + window.location.pathname;
-  const shareableUrl = `${baseUrl}?sequence=${encodedSequence}&bpm=${bpm}`;
-  
+  const shareableUrl = `${baseUrl}?data=${encodedData}`;
+
   return shareableUrl;
 }
 
+// Decodifica los datos de la URL
 function getSequenceFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  
-  if (params.has('sequence')) {
-    const encodedSequence = params.get('sequence');
+
+  if (params.has('data')) {
+    const encodedData = params.get('data');
     try {
-      const decodedSequence = JSON.parse(decodeURIComponent(encodedSequence));
-      return decodedSequence;
+      // Decodifica Base64 y convierte de vuelta a JSON
+      const decodedData = JSON.parse(atob(encodedData));
+      return decodedData;
     } catch (e) {
-      console.error('Error al decodificar la secuencia:', e);
+      console.error('Error al decodificar los datos:', e);
     }
   }
   return null;
 }
 
-// document.getElementById('share').addEventListener('click', () => {
-//   const shareableUrl = createShareableLink(buttonStates, Tone.Transport.bpm.value);
-//   console.log(shareableUrl);
+// Escucha el evento para compartir
+document.getElementById('share').addEventListener('click', () => {
+  const shareableUrl = createShareableLink();
+  console.log(shareableUrl);
 
-//     if (navigator.clipboard && navigator.clipboard.writeText) {
-//       navigator.clipboard.writeText(shareableUrl).then(() => {
-//         alert("Shared link copied");
-//       }).catch(err => {
-//         console.error('Error al copiar el enlace:', err);
-//       });
-//     } else {
-//       let tempInput = document.createElement('input');
-//       tempInput.value = shareableUrl;
-//       document.body.appendChild(tempInput);
-//       tempInput.select();
-//       document.execCommand('copy');
-//       document.body.removeChild(tempInput);
-//       alert("Shared link copied");
-//     }
-
-// });
-
-window.onload = function() {
-  const sharedSequence = getSequenceFromUrl();
-  if (sharedSequence) {
-    console.log("Secuencia cargada desde URL:");
-    buttonStates = sharedSequence;
-
-    $rows.forEach(($row, i) => {
-      const buttons = $row.querySelectorAll('.seq-button');
-    
-      buttons.forEach((button, j) => {
-        if(buttonStates[i][j]){
-          button.classList.add('active');
-        }
-        else{
-          button.classList.remove('active');
-        }
-      });
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(shareableUrl).then(() => {
+      alert("Shared link copied");
+    }).catch(err => {
+      console.error('Error al copiar el enlace:', err);
     });
+  } else {
+    let tempInput = document.createElement('input');
+    tempInput.value = shareableUrl;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    document.execCommand('copy');
+    document.body.removeChild(tempInput);
+    alert("Shared link copied");
   }
-  const params = new URLSearchParams(window.location.search);
-
-  if(params.has('bpm')){
-    const bpm = params.get('bpm');
-
-    Tone.Transport.bpm.value = bpm; 
-    bpmValue.textContent = bpm;
-    bpmSlider.value = bpm;
-  }
-};
+});
 
 // TONE LOOP SETTING
 
@@ -1336,11 +1335,50 @@ window.addEventListener('resize', () => {
 
 window.onload = function() {
   updateSlideWidth();
+  projectTitle = generateRandomTitle();
+  updateTitleField();
 
   borderContainers.forEach(slide => {
     let border = createStaticBorder(slide);
     borderRects.push(border);
   });
+
+  const sharedData = getSequenceFromUrl();
+  if (sharedData) {
+    console.log("Datos cargados desde URL:", sharedData);
+
+    // Restaura las variables
+
+    projectTitle = sharedData.projectTitle;
+    updateTitleField();
+
+    chordsNotes = sharedData.chordsNotes || [];
+    bassNotes = sharedData.bassNotes || [];
+    voiceNotes = sharedData.voiceNotes || [];
+    buttonStates = sharedData.buttonStates || [];
+    bassSequence = sharedData.bassSequence || [];
+    voiceSequence = sharedData.voiceSequence || [];
+    const bpm = sharedData.bpm || 120;
+
+    // Restaura los valores del secuenciador
+    $rows.forEach(($row, i) => {
+      const buttons = $row.querySelectorAll('.seq-button');
+      buttons.forEach((button, j) => {
+        if (buttonStates[i] && buttonStates[i][j]) {
+          button.classList.add('active');
+        } else {
+          button.classList.remove('active');
+        }
+      });
+    });
+
+    // Actualiza el BPM
+    Tone.Transport.bpm.value = bpm;
+    bpmValue.textContent = bpm;
+    bpmSlider.value = bpm;
+    
+  }
+
 };
 
 // Añadir luces a la escena
