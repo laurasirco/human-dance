@@ -8,6 +8,7 @@ import { RenderPixelatedPass } from 'three/addons/postprocessing/RenderPixelated
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createNoise2D } from 'simplex-noise';
+const { degToRad } = THREE.MathUtils;
 
 
 //CONTENT TO SHARE HERE
@@ -58,6 +59,9 @@ var headNod = false;
 var headNodSide = 0;
 var metronomeEnabled = true;
 
+var dispensador, silla, planta, reloj, corcho;
+var iPDisp, iRDisp, iPSilla, iRSilla, iPPlanta, iRPlanta, iPReloj, iRReloj, iPCorcho, iRCorcho;
+
 var cameraZoomed = true;
 var cameraRotatedSide = -1;
 let lookAt;
@@ -80,57 +84,97 @@ let ambientColors = ['greenyellow', 'blue', 'gold', 'pink'];
 var started = false;
 
 // TONE PART
-
 const chordsInC = {
-  'i': ['A2', 'C3', 'E3', 'G3'],     // Am7
-  'iv': ['D2', 'F2', 'A2', 'C3'],    // Dm7
-  'VI': ['F2', 'A2', 'C3', 'E3'],    // Fmaj7
-  'V': ['E2', 'G2', 'B2', 'D3'],     // E7 (dominante)
+  'I': ['C3', 'E3', 'G3', 'B3'],       // Cmaj7
+  'ii': ['D3', 'F3', 'A3', 'C4'],      // Dm7
+  'iii': ['E3', 'G3', 'B3', 'D4'],     // Em7
+  'IV': ['F3', 'A3', 'C4', 'E4'],      // Fmaj7
+  'V': ['G3', 'B3', 'D4', 'F4'],       // G7
+  'vi': ['A3', 'C4', 'E4', 'G4'],      // Am7
+  'vii°': ['B3', 'D4', 'F4', 'A4'],    // Bdim7
+  'i': ['C3', 'Eb3', 'G3', 'Bb3'],     // Cm7
+  'iv': ['F3', 'Ab3', 'C4', 'Eb4'],    // Fm7
+  'VII': ['Bb2', 'D3', 'F3', 'Ab3'],   // Bb7
 };
 
-const progressionPattern = ['i', 'iv', 'VI', 'V'];
+// Progresiones conocidas ajustadas a 4 acordes
+const knownProgressions = [
+  ['I', 'IV', 'V', 'I'],        // Clásica mayor
+  ['vi', 'IV', 'I', 'V'],       // Pop
+  ['ii', 'V', 'I', 'ii'],       // Jazz extendido
+  ['I', 'V', 'vi', 'IV'],       // Muy popular
+  ['i', 'VII', 'vi', 'V'],      // Menor
+  ['i', 'iv', 'VII', 'iii'],    // Menor con cadencia modal
+  ['I', 'vi', 'ii', 'V'],       // Extensión mayor
+];
 
+function validateProgressions() {
+  const invalidProgressions = knownProgressions.filter(prog =>
+    prog.some(degree => !chordsInC.hasOwnProperty(degree))
+  );
+
+  if (invalidProgressions.length > 0) {
+    console.error("Progresiones inválidas detectadas:", invalidProgressions);
+    throw new Error("Hay progresiones inválidas. Revisa 'knownProgressions'.");
+  }
+}
+
+// Validar las progresiones antes de iniciar
+validateProgressions();
+
+// Escoge una progresión aleatoria y genera los acordes
 function generateChordProgression() {
-  return progressionPattern.map(degree => chordsInC[degree]);
+  const progression = knownProgressions[Math.floor(Math.random() * knownProgressions.length)];
+  return progression.map(degree => chordsInC[degree]);
 }
 
 function getUniqueBassNoteFromChord(chord, usedBassNotes) {
-  let bassNote;
-  do {
-    bassNote = [chord[0], chord[1], chord[2], chord[3]][Math.floor(Math.random() * 4)];
-    bassNote = bassNote.replace('2', '1').replace('3', '2'); // Ajuste a octava de bajo
-  } while (usedBassNotes.includes(bassNote));
-  
-  usedBassNotes.push(bassNote); // Añade la nota seleccionada a la lista de usadas
+  // Transformamos las notas a la octava deseada
+  let availableNotes = chord.map(note => note.replace('3', '2').replace('4', '3'));
+  // Filtramos las notas que no se han usado
+  let unusedNotes = availableNotes.filter(note => !usedBassNotes.includes(note));
+  // Si hay notas disponibles, elegimos una al azar; si no, elegimos de todas
+  let bassNote = unusedNotes.length > 0 
+    ? unusedNotes[Math.floor(Math.random() * unusedNotes.length)]
+    : availableNotes[Math.floor(Math.random() * availableNotes.length)];
+
+  usedBassNotes.push(bassNote);
   return bassNote;
 }
 
+// Escoge una nota única para la voz desde el acorde de forma aleatoria
 function getUniqueVoiceNoteFromChord(chord, usedVoiceNotes) {
-  let voiceNote;
-  do {
-    voiceNote = [chord[0], chord[1], chord[2], chord[3]][Math.floor(Math.random() * 4)];
-    voiceNote = voiceNote.replace('2', '3').replace('3', '4');
-  } while (usedVoiceNotes.includes(voiceNote));
-  usedVoiceNotes.push(voiceNote); // Añade la nota seleccionada a la lista de usadas
+  // Transformamos las notas a la octava deseada
+  let availableNotes = chord.map(note => note.replace('3', '4').replace('4', '5'));
+  // Filtramos las notas que no se han usado
+  let unusedNotes = availableNotes.filter(note => !usedVoiceNotes.includes(note));
+  // Si hay notas disponibles, elegimos una al azar; si no, elegimos de todas
+  let voiceNote = unusedNotes.length > 0 
+    ? unusedNotes[Math.floor(Math.random() * unusedNotes.length)]
+    : availableNotes[Math.floor(Math.random() * availableNotes.length)];
+
+  usedVoiceNotes.push(voiceNote);
   return voiceNote;
 }
 
+// Convierte una nota a su valor MIDI
 function noteToMidi(note) {
   const noteMap = {
     'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5, 'F#': 6,
-    'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+    'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11,
   };
-  const pitch = note.slice(0, -1); // Nombre de la nota, sin la octava
-  const octave = parseInt(note.slice(-1)); // Octava de la nota
-  return 12 * (octave + 1) + noteMap[pitch]; // Calcula el número MIDI
+  const pitch = note.slice(0, -1);
+  const octave = parseInt(note.slice(-1));
+  return 12 * (octave + 1) + noteMap[pitch];
 }
 
+// Ordena las notas por su tono
 function sortNotesByPitch(notes) {
   return notes.slice().sort((a, b) => noteToMidi(a) - noteToMidi(b));
 }
 
-let chordsNotes = generateChordProgression(); // 4 acordes basados en la progresión vi - IV - I - V
-
+// Generación inicial
+let chordsNotes = generateChordProgression(); // Genera una progresión basada en patrones conocidos
 let usedBassNotes = [];
 let usedVoiceNotes = [];
 
@@ -140,8 +184,9 @@ let voiceNotes = chordsNotes.map(chord => getUniqueVoiceNoteFromChord(chord, use
 bassNotes = sortNotesByPitch(bassNotes);
 voiceNotes = sortNotesByPitch(voiceNotes);
 
+// Regenerar armonías
 function regenerateHarmonies() {
-  chordsNotes = generateChordProgression();
+  // chordsNotes = generateChordProgression(); // Genera una nueva progresión a partir de patrones conocidos
   
   usedBassNotes = [];
   usedVoiceNotes = [];
@@ -152,14 +197,15 @@ function regenerateHarmonies() {
   bassNotes = sortNotesByPitch(bassNotes);
   voiceNotes = sortNotesByPitch(voiceNotes);
 
-  console.log("Acordes aleatorios:", chordsNotes);
-  console.log("Notas del bajo:", bassNotes);
-  console.log("Notas de la voz:", voiceNotes);
+  // console.log("Acordes aleatorios:", chordsNotes);
+  // console.log("Notas del bajo:", bassNotes);
+  // console.log("Notas de la voz:", voiceNotes);
 }
 
-console.log("Progresión de acordes estilo deep house en A menor:", chordsNotes);
-console.log("Notas del bajo:", bassNotes);
-console.log("Notas de la voz:", voiceNotes);
+// console.log("Progresión de acordes:", chordsNotes);
+// console.log("Notas del bajo:", bassNotes);
+// console.log("Notas de la voz:", voiceNotes);
+
 
 let index = 0;
 let sequenceSteps = 16;
@@ -195,7 +241,7 @@ const delay = new Tone.FeedbackDelay({
 }).toDestination();
 
 const lowpassFilter = new Tone.Filter({
-  frequency: 200, // Frecuencia de corte en 800 Hz (ajústala para más o menos brillo)
+  frequency: 100, // Frecuencia de corte en 800 Hz (ajústala para más o menos brillo)
   type: "lowpass",
   Q: 0 // La resonancia, ajusta para controlar el énfasis cerca de la frecuencia de corte
 }).toDestination();
@@ -205,17 +251,20 @@ const autoWah = new Tone.AutoWah(50, 6, -30).toDestination();
 
 // tr808.connect(reverb);
 
-var metronome = new Tone.MetalSynth({
-  frequency: 2000,   // Frecuencia alta para un click agudo
-  envelope: {
-    attack: 0.001,
-    decay: 0.05,   // Decaimiento rápido
-    release: 0.001
+var metronome = new Tone.MembraneSynth({
+  pitchDecay: 0.01,     // Breve caída en tono
+  octaves: 2,           // Amplia gama de octavas
+  oscillator: {
+    type: "sine"        // Onda sinusoidal para un sonido limpio
   },
-  harmonicity: 1, // Ajuste para añadir complejidad armónica
-  modulationIndex: 32
+  envelope: {
+    attack: 0.001,      // Ataque rápido para un click agudo
+    decay: 0.1,         // Decaimiento más largo para un sonido resonante
+    sustain: 0,
+    release: 0.01       // Liberación rápida para evitar eco
+  }
 });
-metronome.volume.value = -6;
+metronome.volume.value = -16; // Ajusta el volumen
 metronome.toDestination();
 
 const gain = new Tone.Gain(0.6);
@@ -237,12 +286,13 @@ var bass = new Tone.Synth({
 // bass.connect(crusher);
 bass.connect(reverb);
 bass.toDestination();
+bass.volume.value = 4;
 
 let bassNoteIndex = 0;
 
 var voice = new Tone.Synth({
   oscillator: {
-    type: "sine" 
+    type: "triangle" 
   },
   envelope: {
     attack: 0.02, // Ataque suave
@@ -251,10 +301,10 @@ var voice = new Tone.Synth({
     release: 1.2
   }
 });
-voice.connect(lowpassFilter);
 // voice.connect(crusher);
 voice.connect(delay);
 voice.connect(reverb);
+voice.volume.value = -10;
 
 voice.toDestination();
 
@@ -442,13 +492,6 @@ function updateBorderFill(rect, step, totalSteps) {
 
 let borderContainers = document.querySelectorAll('.border-container');
 let borderRects = [];
-
-borderContainers.forEach(slide => {
-  let border = createStaticBorder(slide);
-  borderRects.push(border);
-});
-
-console.log(borderRects);
 
 let mouseDown = false;
 
@@ -938,6 +981,103 @@ const loop = new Tone.Loop((time) => {
           let voiceNote = voiceSequence[step];
           voice.triggerAttackRelease(voiceNotes[voiceNote], '16n', time);
           voiceButtons[voiceNote].classList.add('active');
+
+          if(voiceNote == 0){
+            const sign = Math.random() < 0.5 ? 1 : -1;
+            gsap.to(planta.position, {
+              x: iPPlanta.x + sign * 0.5, 
+              duration: 0.2,
+              ease: "power3.inOut",
+              onComplete: () => {
+                gsap.to(planta.position, {
+                  x: iPPlanta.x,
+                  duration: 0.2,
+                  ease: "power3.inOut"
+                });
+              }
+            });
+            gsap.to(planta.rotation, {
+              y: iRPlanta.y + sign * (Math.random() * degToRad(360) - degToRad(180)), 
+              duration: 0.2,
+              ease: "power3.out",
+              onComplete: () => {
+                gsap.to(planta.rotation, {
+                  y: iRPlanta.y,
+                  duration: 0.2,
+                  ease: "power.out"
+                });
+              }
+            });           
+          }
+          else if(voiceNote == 1){
+            const sign = Math.random() < 0.5 ? 1 : -1;
+            gsap.to(dispensador.position, {
+              z: iPDisp.z + 2.5, 
+              duration: 0.2,
+              ease: "power3.inOut",
+              onComplete: () => {
+                gsap.to(dispensador.position, {
+                  z: iPDisp.z,
+                  duration: 0.2,
+                  ease: "power3.inOut"
+                });
+              }
+            });
+            gsap.to(dispensador.rotation, {
+              y: iRDisp.y + sign * (Math.random() * degToRad(360) - degToRad(180)), 
+              duration: 0.2,
+              ease: "power3.out",
+              onComplete: () => {
+                gsap.to(dispensador.rotation, {
+                  y: iRDisp.y,
+                  duration: 0.2,
+                  ease: "power.out"
+                });
+              }
+            }); 
+          }
+          else if(voiceNote == 2){
+            gsap.to(silla.position, {
+              x: iPSilla.x - 0.5, 
+              duration: 0.2,
+              ease: "power3.inOut",
+              onComplete: () => {
+                gsap.to(silla.position, {
+                  x: iPSilla.x,
+                  duration: 0.2,
+                  ease: "power3.inOut"
+                });
+              }
+            });
+            const sign = Math.random() < 0.5 ? 1 : -1;
+            gsap.to(silla.rotation, {
+              y: iRSilla.y + sign * (Math.random() * degToRad(360) - degToRad(180)), 
+              duration: 0.2,
+              ease: "power3.out",
+              onComplete: () => {
+                gsap.to(silla.rotation, {
+                  y: iRSilla.y,
+                  duration: 0.2,
+                  ease: "power.out"
+                });
+              }
+            });
+          }
+          else{
+            const sign = Math.random() < 0.5 ? 1 : -1;
+            gsap.to(reloj.rotation, {
+              y: iRReloj.y + sign * (Math.random() * degToRad(360) - degToRad(180)), 
+              duration: 0.2,
+              ease: "power3.out",
+              onComplete: () => {
+                gsap.to(reloj.rotation, {
+                  y: iRReloj.y,
+                  duration: 0.2,
+                  ease: "power.out"
+                });
+              }
+            });
+          }
         }
       }
 
@@ -1196,6 +1336,11 @@ window.addEventListener('resize', () => {
 
 window.onload = function() {
   updateSlideWidth();
+
+  borderContainers.forEach(slide => {
+    let border = createStaticBorder(slide);
+    borderRects.push(border);
+  });
 };
 
 // Añadir luces a la escena
@@ -1254,7 +1399,7 @@ const directionalLight3 = new THREE.DirectionalLight('midnightblue', 3);
 directionalLight3.position.set(4, 2, -1);
 scene.add(directionalLight3);
 
-const hemisphereLight = new THREE.HemisphereLight('red', 'blue', 0.7)
+const hemisphereLight = new THREE.HemisphereLight('red', 'blue', 2)
 scene.add(hemisphereLight)
 
 let gltfCamera = null;
@@ -1303,6 +1448,32 @@ loader.load('models/scene_v01.gltf', function(gltf){
         camera.position.y = gltfCamera.position.y;
       }
 
+    }
+
+    if(object.name == 'corcho'){
+      corcho = object;
+      iPCorcho = new THREE.Vector3(object.position.x, object.position.y, object.position.z);
+      iRCorcho = new THREE.Euler(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.order);
+    }
+    if(object.name == 'dispensador'){
+      dispensador = object;
+      iPDisp = new THREE.Vector3(object.position.x, object.position.y, object.position.z);
+      iRDisp = new THREE.Euler(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.order);      
+    }
+    if(object.name == 'planta'){
+      planta = object;
+      iPPlanta = new THREE.Vector3(object.position.x, object.position.y, object.position.z);
+      iRPlanta = new THREE.Euler(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.order);
+    }
+    if(object.name == 'silla'){
+      silla = object;
+      iPSilla = new THREE.Vector3(object.position.x, object.position.y, object.position.z);
+      iRSilla = new THREE.Euler(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.order);    
+    }
+    if(object.name == 'reloj'){
+      reloj = object;
+      iPReloj = new THREE.Vector3(object.position.x, object.position.y, object.position.z);
+      iRReloj = new THREE.Euler(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.order);
     }
 
   });
